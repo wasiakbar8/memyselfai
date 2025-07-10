@@ -1,24 +1,38 @@
 import { Link, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
-    Image,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Image,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import MyButton from './component/MyButton';
 
 const Login = () => {
   const router = useRouter();
   const [rememberMe, setRememberMe] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
   const onContinue = () => {
-    router.navigate('/login');
+    if (!email || !password) {
+      alert('Please enter both email and password');
+      return;
+    }
+    router.replace('./home'); // Replace with your actual home route
   };
 
   const toggleRememberMe = () => setRememberMe(!rememberMe);
+
+  const onGoogleLogin = () => {
+    alert('Google login coming soon');
+  };
+
+  const onFacebookLogin = () => {
+    alert('Facebook login coming soon');
+  };
 
   return (
     <View style={styles.container}>
@@ -39,24 +53,20 @@ const Login = () => {
           placeholder="Enter your Email"
           style={styles.input}
           keyboardType="email-address"
+          value={email}
+          onChangeText={setEmail}
         />
         <TextInput
           placeholder="Enter your Password"
           style={styles.input}
           secureTextEntry
+          value={password}
+          onChangeText={setPassword}
         />
 
         <View style={styles.optionsRow}>
-          <TouchableOpacity
-            style={styles.rememberMe}
-            onPress={toggleRememberMe}
-          >
-            <View
-              style={[
-                styles.checkbox,
-                rememberMe && styles.checkboxChecked,
-              ]}
-            />
+          <TouchableOpacity style={styles.rememberMe} onPress={toggleRememberMe}>
+            <View style={[styles.checkbox, rememberMe && styles.checkboxChecked]} />
             <Text style={styles.rememberMeText}>Remember Me</Text>
           </TouchableOpacity>
 
@@ -67,6 +77,16 @@ const Login = () => {
 
         <View style={{ width: '100%' }}>
           <MyButton title="Login" onPress={onContinue} />
+        </View>
+
+        {/* Social Login Buttons */}
+        <View style={styles.socialContainer}>
+          <TouchableOpacity style={[styles.socialButton, { backgroundColor: 'white' }]} onPress={onGoogleLogin}>
+            <Text style={styles.socialText}>Continue with Google</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.socialButton, { backgroundColor: 'white' }]} onPress={onFacebookLogin}>
+            <Text style={styles.socialText}>Continue with Facebook</Text>
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -126,6 +146,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 16,
     fontSize: 16,
+    backgroundColor:'white'
   },
   optionsRow: {
     flexDirection: 'row',
@@ -157,6 +178,21 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#007bff',
     textDecorationLine: 'underline',
+  },
+  socialContainer: {
+    width: '100%',
+    marginTop: 20,
+  },
+  socialButton: {
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 12,
+    alignItems: 'center',
+  },
+  socialText: {
+    color: 'black',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   footer: {
     alignItems: 'center',

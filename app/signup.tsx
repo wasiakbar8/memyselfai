@@ -1,17 +1,16 @@
 import { Link, useRouter } from 'expo-router';
 import React from 'react';
 import {
-    Image,
-    StyleSheet,
-    Text,
-    TextInput,
-    View
+  Image,
+  StyleSheet,
+  Text,
+  TextInput,
+  View
 } from 'react-native';
 import MyButton from './component/MyButton';
 
 const Login = () => {
   const router = useRouter();
-  
 
   const onContinue = () => {
     router.navigate('/login');
@@ -28,60 +27,39 @@ const Login = () => {
 
         <View style={styles.headingContainer}>
           <Text style={styles.heading}>Register</Text>
-          <Text style={styles.subText}>
-            Create an account to Continue!
-          </Text>
+          <Text style={styles.subText}>Create an account to Continue!</Text>
         </View>
 
+        <TextInput placeholder="1st Name" style={styles.input} />
+        <TextInput placeholder="Last Name" style={styles.input} />
         <TextInput
-          placeholder="1st Name"
-          style={styles.input}
-          
-        />
-        <TextInput
-          placeholder="Last Name"
-          style={styles.input}
-        />
-         <TextInput
           placeholder="Enter Email"
           style={styles.input}
-          keyboardType='email-address'
+          keyboardType="email-address"
         />
-         <TextInput
-          placeholder="date of birth"
-          style={styles.input}
-          
-        />
-         <TextInput
-          placeholder="number"
-          style={styles.input}
-          
-        />
-         <TextInput
+        <TextInput placeholder="Number" style={styles.input} keyboardType="numeric" />
+        <TextInput
           placeholder="Enter your Password"
           style={styles.input}
           secureTextEntry
         />
 
         
-
-        <View style={{ width: '100%' }}>
           <MyButton title="Register" onPress={onContinue} />
-        </View>
+        
       </View>
-      <View style={styles.footer}>
-              <Text>
-                Already have an account{' '}
-                <Link
-                  href="./login"
-                  style={{ color: '#007bff', textDecorationLine: 'underline' }}
-                >
-                  Login
-                </Link>
-              </Text>
-            </View>
-      
 
+      <View style={styles.footer}>
+        <Text>
+          Already have an account{' '}
+          <Link
+            href="./login"
+            style={{ color: '#007bff', textDecorationLine: 'underline' }}
+          >
+            Login
+          </Link>
+        </Text>
+      </View>
     </View>
   );
 };
@@ -127,19 +105,11 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 16,
     fontSize: 16,
+    backgroundColor:'white'
   },
-  optionsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    width: '100%',
-    marginBottom: 20,
-  },
-   footer: {
+  footer: {
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 16,
   },
-  
-  
 });
