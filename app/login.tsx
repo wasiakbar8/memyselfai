@@ -21,7 +21,7 @@ const Login = () => {
       alert('Please enter both email and password');
       return;
     }
-    router.replace('./home'); // Replace with your actual home route
+    router.replace('./dashboard'); // Replace with your actual home route
   };
 
   const toggleRememberMe = () => setRememberMe(!rememberMe);
