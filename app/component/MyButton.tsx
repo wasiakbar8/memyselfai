@@ -1,41 +1,52 @@
 import React from 'react';
-import { Dimensions, StyleSheet, Text, TouchableOpacity } from 'react-native';
+import {
+  Text,
+  TextStyle,
+  TouchableOpacity,
+  useWindowDimensions,
+  ViewStyle
+} from 'react-native';
 
 type MyButtonProps = {
   title: string;
   onPress: () => void;
 };
 
-const { width: screenWidth } = Dimensions.get('window');
-
 const MyButton = ({ title, onPress }: MyButtonProps) => {
+  const { width } = useWindowDimensions();
+
+  const dynamicStyles = getDynamicStyles(width);
+
   return (
-    <TouchableOpacity style={styles.btn1} onPress={onPress}>
-      <Text style={styles.buttonText}>{title}</Text>
+    <TouchableOpacity style={dynamicStyles.button} onPress={onPress}>
+      <Text style={dynamicStyles.buttonText}>{title}</Text>
     </TouchableOpacity>
   );
 };
 
-const styles = StyleSheet.create({
-  btn1: {
-    backgroundColor: "#ffed29",
-    paddingVertical: 16,
-    paddingHorizontal: screenWidth * 0.4, // 10% of screen width on each side
+const getDynamicStyles = (width: number): {
+  button: ViewStyle;
+  buttonText: TextStyle;
+} => ({
+  button: {
+    backgroundColor: '#ffed29',
+    paddingVertical: width * 0.03, // responsive vertical padding
+    paddingHorizontal: width * 0.05, // responsive horizontal padding
     borderWidth: 0.5,
     borderColor: 'black',
     borderRadius: 4,
-    alignSelf: 'center', // Centers the button
-    minWidth: screenWidth * 0.7, // Minimum 70% of screen width
-    maxWidth: screenWidth * 0.9, // Maximum 90% of screen width
+    alignSelf: 'center',
+    minWidth: width * 0.85, // 60% of screen width
+    maxWidth: width * 0.85,
     alignItems: 'center',
     justifyContent: 'center',
   },
   buttonText: {
-    fontSize: 18,
-    fontWeight: "bold",
+    fontSize: Math.min(20, width * 0.045), // clamp to avoid huge text
+    fontWeight: 'bold',
     color: 'black',
     textAlign: 'center',
-  }
+  },
 });
 
 export default MyButton;

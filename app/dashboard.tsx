@@ -1,5 +1,6 @@
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+
 import {
   Dimensions,
   Modal,
@@ -11,6 +12,13 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
+useEffect(() => {
+  StatusBar.setHidden(true, 'none');
+  return () => {
+    StatusBar.setHidden(false, 'none');
+  };
+}, []);
+
 
 const { width, height } = Dimensions.get('window');
 
@@ -141,11 +149,11 @@ const Dashboard: React.FC = () => {
   };
 
   const gotoinbox = (): void => {
-    router.replace('./unifiedinbox');
+    router.push('./unifiedinbox');
   };
 
   const gotovoice = (): void => {
-    router.replace('./voicescreen');
+    router.push('./voicescreen');
   };
 
   const handleMenuPress = (): void => {

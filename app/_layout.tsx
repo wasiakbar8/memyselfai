@@ -8,6 +8,8 @@ const _layout = () => {
       <Stack.Screen name="login"/>
       <Stack.Screen name="signup"/>
        <Stack.Screen name="dashboard"  />
+       <Stack.Screen name="unifiedinbox"  />
+       <Stack.Screen name="voicescreen"  />
         <Stack.Screen name="profile"  />
     </Stack>
   )

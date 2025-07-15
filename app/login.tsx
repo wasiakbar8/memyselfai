@@ -1,7 +1,8 @@
 import { Link, useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Image,
+  StatusBar,
   StyleSheet,
   Text,
   TextInput,
@@ -9,6 +10,12 @@ import {
   View,
 } from 'react-native';
 import MyButton from './component/MyButton';
+useEffect(() => {
+  StatusBar.setHidden(true, 'none');
+  return () => {
+    StatusBar.setHidden(false, 'none');
+  };
+}, []);
 
 const Login = () => {
   const router = useRouter();
@@ -21,7 +28,7 @@ const Login = () => {
       alert('Please enter both email and password');
       return;
     }
-    router.replace('./dashboard'); // Replace with your actual home route
+    router.push('./dashboard'); // Replace with your actual home route
   };
 
   const toggleRememberMe = () => setRememberMe(!rememberMe);
@@ -76,7 +83,7 @@ const Login = () => {
         </View>
 
         <View style={{ width: '100%' }}>
-          <MyButton title="Login" onPress={onContinue} />
+          <MyButton title="login" onPress={onContinue} />
         </View>
 
         {/* Social Login Buttons */}
