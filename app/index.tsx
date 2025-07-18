@@ -13,7 +13,7 @@ import {
 const { width, height } = Dimensions.get('window');
 
 const SplashScreen = () => {
-  const router = useRouter(); // ✅ Get router
+  const router = useRouter();
 
   const fadeAnim = new Animated.Value(0);
   const scaleAnim = new Animated.Value(0.8);
@@ -33,7 +33,7 @@ const SplashScreen = () => {
     ]).start();
 
     const timer = setTimeout(() => {
-      router.replace('./login'); // ✅ Navigate using route name
+      router.replace('./SplashScreen2'); // Navigate to second splash screen
     }, 3000);
 
     return () => clearTimeout(timer);

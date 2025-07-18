@@ -13,5 +13,5 @@
     "**/*.tsx",
     ".expo/types/**/*.ts",
     "expo-env.d.ts"
-  ]
+, "app/component/quicktools.jsx", "app/dashboard.jsx", "app/component/CustomDrawer.jsx", "app/signup.jsx"  ]
 }

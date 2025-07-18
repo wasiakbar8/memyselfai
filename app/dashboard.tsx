@@ -1,8 +1,7 @@
+import { FontAwesome } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-
 import {
-  Dimensions,
   Modal,
   SafeAreaView,
   ScrollView,
@@ -12,32 +11,15 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
-useEffect(() => {
-  StatusBar.setHidden(true, 'none');
-  return () => {
-    StatusBar.setHidden(false, 'none');
-  };
-}, []);
-
-
-const { width, height } = Dimensions.get('window');
+import QuickTools from './/component/quicktools';
+import Calendar from './component/calendar';
+import CustomDrawer from './component/CustomDrawer';
+import VoiceAgent from './component/voiceagent';
 
 // Types
 interface ProfileScreenProps {
   isVisible: boolean;
   onClose: () => void;
-}
-
-interface MenuItem {
-  id: string;
-  title: string;
-  icon: string;
-}
-
-interface DropdownMenuProps {
-  isVisible: boolean;
-  onClose: () => void;
-  onItemPress: (item: MenuItem) => void;
 }
 
 // Profile Screen Component
@@ -92,60 +74,22 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ isVisible, onClose }) => 
   );
 };
 
-// Dropdown Menu Component
-const DropdownMenu: React.FC<DropdownMenuProps> = ({ isVisible, onClose, onItemPress }) => {
-  const menuItems: MenuItem[] = [
-    { id: 'home', title: 'Home', icon: '🏠' },
-    { id: 'inbox', title: 'Inbox', icon: '📧' },
-    { id: 'calendar', title: 'Calendar', icon: '📅' },
-    { id: 'contacts', title: 'Contacts', icon: '👥' },
-    { id: 'reports', title: 'Reports', icon: '📊' },
-    { id: 'settings', title: 'Settings', icon: '⚙️' },
-    { id: 'help', title: 'Help', icon: '❓' },
-  ];
-
-  return (
-    <Modal
-      visible={isVisible}
-      transparent={true}
-      animationType="fade"
-      onRequestClose={onClose}
-    >
-      <TouchableOpacity 
-        style={styles.dropdownOverlay} 
-        activeOpacity={1} 
-        onPress={onClose}
-      >
-        <View style={styles.dropdownContainer}>
-          <View style={styles.dropdownHeader}>
-            <Text style={styles.dropdownTitle}>Menu</Text>
-          </View>
-          {menuItems.map((item) => (
-            <TouchableOpacity
-              key={item.id}
-              style={styles.dropdownItem}
-              onPress={() => onItemPress(item)}
-            >
-              <Text style={styles.dropdownIcon}>{item.icon}</Text>
-              <Text style={styles.dropdownItemText}>{item.title}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      </TouchableOpacity>
-    </Modal>
-  );
-};
-
 // Main Dashboard Component
 const Dashboard: React.FC = () => {
   const router = useRouter();
   const [selectedTab, setSelectedTab] = useState<'Business' | 'Personal'>('Business');
   const [showProfile, setShowProfile] = useState<boolean>(false);
-  const [showDropdown, setShowDropdown] = useState<boolean>(false);
+  const [isDrawerVisible, setIsDrawerVisible] = useState<boolean>(false);
+
+  useEffect(() => {
+    StatusBar.setHidden(true, 'none');
+    return () => {
+      StatusBar.setHidden(false, 'none');
+    };
+  }, []);
 
   const handleProfilePress = (): void => {
-    const router =useRouter();
-    router.push('./profile')
+    router.push('./profile');
   };
 
   const gotoinbox = (): void => {
@@ -156,14 +100,12 @@ const Dashboard: React.FC = () => {
     router.push('./voicescreen');
   };
 
-  const handleMenuPress = (): void => {
-    setShowDropdown(false);
+  const openDrawer = (): void => {
+    setIsDrawerVisible(true);
   };
 
-  const handleDropdownItemPress = (item: MenuItem): void => {
-    console.log('Selected:', item.title);
-    setShowDropdown(false);
-    // Add navigation logic here
+  const closeDrawer = (): void => {
+    setIsDrawerVisible(false);
   };
 
   return (
@@ -172,7 +114,7 @@ const Dashboard: React.FC = () => {
       
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.menuIcon} onPress={handleMenuPress}>
+        <TouchableOpacity style={styles.menuIcon} onPress={openDrawer}>
           <View style={styles.menuLine} />
           <View style={styles.menuLine} />
           <View style={styles.menuLine} />
@@ -218,23 +160,64 @@ const Dashboard: React.FC = () => {
           </TouchableOpacity>
         </View>
 
-        {/* Messages Stats */}
-        <View style={styles.statsContainer}>
-          <View style={styles.statItem}>
-            <Text style={styles.statNumber}>24</Text>
-            <Text style={styles.statLabel}>Messages</Text>
-            <Text style={styles.statSubLabel}>Received today</Text>
-          </View>
-          <View style={styles.statItem}>
-            <Text style={styles.statNumber}>11</Text>
-            <Text style={styles.statLabel}>Pending</Text>
-            <View style={styles.chartPlaceholder}>
-              <View style={styles.chartBar} />
-              <View style={[styles.chartBar, { height: 20 }]} />
-              <View style={[styles.chartBar, { height: 15 }]} />
+        {/* Messages Stats - Now Scrollable */}
+        <ScrollView 
+          horizontal 
+          showsHorizontalScrollIndicator={false}
+          style={styles.statsScrollView}
+          contentContainerStyle={styles.statsScrollContainer}
+        >
+          <View style={styles.statCard}>
+            <View style={styles.statItem}>
+              <Text style={styles.statNumber}>24</Text>
+              <Text style={styles.statLabel}>Messages</Text>
+              <Text style={styles.statSubLabel}>Received today</Text>
+            </View>
+            <View style={styles.statItem}>
+              <Text style={styles.statNumber}>11</Text>
+              <Text style={styles.statLabel}>Pending</Text>
+              <View style={styles.chartPlaceholder}>
+                <View style={styles.chartBar} />
+                <View style={[styles.chartBar, { height: 20 }]} />
+                <View style={[styles.chartBar, { height: 15 }]} />
+              </View>
             </View>
           </View>
-        </View>
+
+          <View style={styles.statCard}>
+            <View style={styles.statItem}>
+              <Text style={styles.statNumber}>18</Text>
+              <Text style={styles.statLabel}>Completed</Text>
+              <Text style={styles.statSubLabel}>This week</Text>
+            </View>
+            <View style={styles.statItem}>
+              <Text style={styles.statNumber}>7</Text>
+              <Text style={styles.statLabel}>Urgent</Text>
+              <View style={styles.chartPlaceholder}>
+                <View style={[styles.chartBar, { height: 18 }]} />
+                <View style={[styles.chartBar, { height: 25 }]} />
+                <View style={[styles.chartBar, { height: 12 }]} />
+              </View>
+            </View>
+          </View>
+
+          <View style={styles.statCard}>
+            <View style={styles.statItem}>
+              <Text style={styles.statNumber}>32</Text>
+              <Text style={styles.statLabel}>Archived</Text>
+              <Text style={styles.statSubLabel}>Last 7 days</Text>
+            </View>
+            <View style={styles.statItem}>
+              <Text style={styles.statNumber}>5</Text>
+              <Text style={styles.statLabel}>Drafts</Text>
+              <View style={styles.chartPlaceholder}>
+                <View style={[styles.chartBar, { height: 22 }]} />
+                <View style={[styles.chartBar, { height: 16 }]} />
+                <View style={[styles.chartBar, { height: 25 }]} />
+              </View>
+            </View>
+          </View>
+        </ScrollView>
 
         {/* Unified Inbox */}
         <View style={styles.inboxContainer}>
@@ -245,8 +228,9 @@ const Dashboard: React.FC = () => {
           
           <View style={styles.inboxApps}>
             <View style={styles.inboxApp}>
-              <View style={[styles.appIcon, { backgroundColor: '#4285F4' }]}>
-                <Text style={styles.appIconText}>W</Text>
+              <View style={[styles.appIcon, { backgroundColor: '#8599d1' }]}>
+                <Text style={styles.appIconText}><FontAwesome name="whatsapp" size={30} color="#1c4c88" />
+</Text>
               </View>
               <Text style={styles.appName}>WhatsApp</Text>
               <View style={styles.appBadge}>
@@ -255,8 +239,8 @@ const Dashboard: React.FC = () => {
             </View>
             
             <View style={styles.inboxApp}>
-              <View style={[styles.appIcon, { backgroundColor: '#9C27B0' }]}>
-                <Text style={styles.appIconText}>E</Text>
+              <View style={[styles.appIcon, { backgroundColor: '#b288d3' }]}>
+                <Text style={styles.appIconText}><FontAwesome name="envelope" size={28}  color="#3f1569" /></Text>
               </View>
               <Text style={styles.appName}>Email</Text>
               <View style={styles.appBadge}>
@@ -265,8 +249,8 @@ const Dashboard: React.FC = () => {
             </View>
             
             <View style={styles.inboxApp}>
-              <View style={[styles.appIcon, { backgroundColor: '#00BCD4' }]}>
-                <Text style={styles.appIconText}>S</Text>
+              <View style={[styles.appIcon, { backgroundColor: '#b5e2c7' }]}>
+                <Text style={styles.appIconText}><FontAwesome name="comment" size={30} color="#379f5d" /></Text>
               </View>
               <Text style={styles.appName}>SMS</Text>
               <View style={styles.appBadge}>
@@ -275,8 +259,9 @@ const Dashboard: React.FC = () => {
             </View>
             
             <View style={styles.inboxApp}>
-              <View style={[styles.appIcon, { backgroundColor: '#2196F3' }]}>
-                <Text style={styles.appIconText}>T</Text>
+              <View style={[styles.appIcon, { backgroundColor: '#8599d1' }]}>
+                <Text style={styles.appIconText}> <FontAwesome name="skype" size={30} color="#1c4c88" />
+</Text>
               </View>
               <Text style={styles.appName}>Skype</Text>
               <View style={styles.appBadge}>
@@ -334,25 +319,19 @@ const Dashboard: React.FC = () => {
             <Text style={styles.activityTime}>1 hour ago</Text>
           </View>
           
-          <TouchableOpacity style={styles.viewAllButton} onPress={gotovoice}>
+          <TouchableOpacity style={styles.viewAllButton} >
             <Text style={styles.viewAllText}>View All Activity</Text>
           </TouchableOpacity>
         </View>
 
         {/* Calendar */}
-        <View style={styles.calendarContainer}>
-          <View style={styles.calendarHeader}>
-            <Text style={styles.calendarTitle}>Calendar</Text>
-            <TouchableOpacity style={styles.addButton}>
-              <Text style={styles.addButtonText}>+</Text>
-            </TouchableOpacity>
-          </View>
-          <View style={styles.calendarPlaceholder}>
-            <View style={styles.calendarLine} />
-            <View style={styles.calendarLine} />
-            <View style={styles.calendarLine} />
-          </View>
-        </View>
+        <Calendar />
+        
+        {/* Voice Agent */}
+        <VoiceAgent />
+        
+        {/* Quick Tools */}
+        <QuickTools />
       </ScrollView>
       
       {/* Floating Action Button */}
@@ -360,22 +339,23 @@ const Dashboard: React.FC = () => {
         <Text style={styles.fabText}>💬</Text>
       </TouchableOpacity>
 
-      {/* Dropdown Menu */}
-      <DropdownMenu
-        isVisible={showDropdown}
-        onClose={() => setShowDropdown(false)}
-        onItemPress={handleDropdownItemPress}
-      />
-
       {/* Profile Screen */}
       <ProfileScreen
         isVisible={showProfile}
         onClose={() => setShowProfile(false)}
       />
+
+      {/* Custom Drawer */}
+      <CustomDrawer
+        isVisible={isDrawerVisible}
+        onClose={closeDrawer}
+        activeScreen="dashboard"
+      />
     </SafeAreaView>
   );
 };
 
+// ... (rest of the styles remain the same)
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -458,17 +438,26 @@ const styles = StyleSheet.create({
     color: '#333',
     fontWeight: '500',
   },
-  statsContainer: {
+  statsScrollView: {
+    marginBottom: 0,
+  },
+  statsScrollContainer: {
+    height: 200,
+    paddingRight: 20,
+    marginBottom: 0,
+  },
+  statCard: {
     flexDirection: 'row',
     backgroundColor: '#fff',
     borderRadius: 12,
     padding: 20,
-    marginBottom: 20,
+    marginRight: 15,
     elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 3,
+    width: 320,
   },
   statItem: {
     flex: 1,
@@ -503,7 +492,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 12,
     padding: 20,
-    marginBottom: 20,
+    marginBottom: 15,
+    marginTop: 5,
     elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
@@ -586,7 +576,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 12,
     padding: 20,
-    marginBottom: 20,
+    marginBottom: 15, // Reduced from 20
     elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
@@ -648,49 +638,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#333',
   },
-  calendarContainer: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 20,
-    marginBottom: 80,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-  },
-  calendarHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 15,
-  },
-  calendarTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-  },
-  addButton: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: '#FFF200',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  addButtonText: {
-    fontSize: 18,
-    color: '#333',
-    fontWeight: 'bold',
-  },
-  calendarPlaceholder: {
-    height: 60,
-  },
-  calendarLine: {
-    height: 2,
-    backgroundColor: '#333',
-    marginVertical: 8,
-  },
   fab: {
     position: 'absolute',
     bottom: 20,
@@ -710,52 +657,6 @@ const styles = StyleSheet.create({
   fabText: {
     fontSize: 24,
   },
-  // Dropdown Menu Styles
-  dropdownOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-start',
-    alignItems: 'flex-start',
-  },
-  dropdownContainer: {
-    backgroundColor: '#fff',
-    marginTop: 60,
-    marginLeft: 20,
-    borderRadius: 12,
-    minWidth: 200,
-    maxWidth: width * 0.7,
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-  },
-  dropdownHeader: {
-    paddingHorizontal: 20,
-    paddingVertical: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-  },
-  dropdownTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#333',
-  },
-  dropdownItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-  },
-  dropdownIcon: {
-    fontSize: 18,
-    marginRight: 12,
-  },
-  dropdownItemText: {
-    fontSize: 16,
-    color: '#333',
-  },
-  // Profile Screen Styles
   profileContainer: {
     flex: 1,
     backgroundColor: '#f5f5f5',
