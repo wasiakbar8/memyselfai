@@ -35,7 +35,7 @@ const VaultScreen = () => {
       securityIcon: 'lock-closed',
       securityText: 'Biometric unlock required',
       color: '#D1D5DB',
-      iconColor: '#FFD700',
+      iconColor: '#D1D5DB',
       icon: '📄',
     },
     {
@@ -48,7 +48,7 @@ const VaultScreen = () => {
       securityIcon: 'lock-closed',
       securityText: 'Biometric unlock required',
       color: '#D1D5DB',
-      iconColor: '#8B5CF6',
+      iconColor: '#D1D5DB',
       icon: '📋',
     },
     {
@@ -61,7 +61,7 @@ const VaultScreen = () => {
       securityIcon: 'warning',
       securityText: 'Low Security',
       color: '#D1D5DB',
-      iconColor: '#3B82F6',
+      iconColor: '#D1D5DB6',
       icon: '🎓',
     },
     {
@@ -74,7 +74,7 @@ const VaultScreen = () => {
       securityIcon: 'lock-closed',
       securityText: 'Biometric unlock required',
       color: '#D1D5DB',
-      iconColor: '#EF4444',
+      iconColor: '#D1D5DB',
       icon: '🏥',
     },
     {
@@ -87,7 +87,7 @@ const VaultScreen = () => {
       securityIcon: 'warning',
       securityText: 'Low Security',
       color: '#D1D5DB',
-      iconColor: '#22C55E',
+      iconColor: '#D1D5DB',
       icon: '📄',
     },
     {
@@ -100,7 +100,7 @@ const VaultScreen = () => {
       securityIcon: 'warning',
       securityText: 'Low Security',
       color: '#D1D5DB',
-      iconColor: '#FFD700',
+      iconColor: '#D1D5DB',
       icon: '🏛️',
     },
   ];

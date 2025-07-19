@@ -258,10 +258,11 @@ const Dashboard: React.FC = () => {
             
             <View style={styles.inboxApp}>
               <View style={[styles.appIcon, { backgroundColor: '#8599d1' }]}>
-                <Text style={styles.appIconText}> <FontAwesome name="skype" size={30} color="#1c4c88" />
+                <Text style={styles.appIconText}>
+                   <Ionicons name="logo-slack" size={30} color="#1c4c88" />
 </Text>
               </View>
-              <Text style={styles.appName}>Skype</Text>
+              <Text style={styles.appName}>Slack</Text>
               <View style={styles.appBadge}>
                 <Text style={styles.badgeText}>2</Text>
               </View>

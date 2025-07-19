@@ -36,7 +36,7 @@ const QuickTools = () => {
       icon: 'book',
       iconColor: '#7B1FA2',
       backgroundColor: '#F3E5F5',
-      route: './diary',
+      route: './DiaryScreen',
     },
     {
       id: 'family',
