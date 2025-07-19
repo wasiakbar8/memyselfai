@@ -10,9 +10,11 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import CustomDrawer from './component/CustomDrawer'; // Import the CustomDrawer component
 
 const VaultScreen = () => {
   const [selectedCategory, setSelectedCategory] = useState('All Docs');
+  const [isDrawerVisible, setIsDrawerVisible] = useState(false); // Add drawer state
 
   const categories = [
     { id: 'all', name: 'All Docs', icon: '📄', color: '#FFD700', bgColor: '#FFD700' },
@@ -94,7 +96,7 @@ const VaultScreen = () => {
       subtitle: 'Updated 1 month ago',
       fileType: 'PDF',
       status: 'Unlocked',
-      statusColor: '#9CA3AF',
+      statusColor: '#FFD700',
       securityIcon: 'warning',
       securityText: 'Low Security',
       color: '#D1D5DB',
@@ -102,10 +104,22 @@ const VaultScreen = () => {
       icon: '🏛️',
     },
   ];
-  const router =useRouter();
-  const gotoprofile=()=>{
-router.push('./profile')
-  }
+
+  const router = useRouter();
+  
+  const gotoprofile = () => {
+    router.push('./profile');
+  };
+
+  // Function to open drawer
+  const openDrawer = () => {
+    setIsDrawerVisible(true);
+  };
+
+  // Function to close drawer
+  const closeDrawer = () => {
+    setIsDrawerVisible(false);
+  };
 
   const CategoryButton = ({ category, isSelected, onPress }) => (
     <TouchableOpacity
@@ -171,7 +185,7 @@ router.push('./profile')
       
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity>
+        <TouchableOpacity onPress={openDrawer}>
           <Ionicons name="menu" size={24} color="#000" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Vault</Text>
@@ -220,6 +234,13 @@ router.push('./profile')
       <TouchableOpacity style={styles.fab}>
         <Ionicons name="add" size={24} color="#000" />
       </TouchableOpacity>
+
+      {/* Custom Drawer */}
+      <CustomDrawer
+        isVisible={isDrawerVisible}
+        onClose={closeDrawer}
+        activeScreen="vault" // Set the active screen to highlight vault in drawer
+      />
     </SafeAreaView>
   );
 };

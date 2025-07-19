@@ -72,6 +72,7 @@ const SplashScreen = () => {
         <Text style={styles.appName}>
           <Text style={styles.meText}>Me</Text>
           <Text style={styles.myselfText}>Myself</Text>
+          <Text style={{color:'#FFD54F'}}>I</Text>
           <Text style={styles.aiText}>.ai</Text>
         </Text>
       </Animated.View>

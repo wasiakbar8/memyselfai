@@ -2,11 +2,11 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useEffect } from 'react';
 import {
-    Animated,
-    Dimensions,
-    StatusBar,
-    StyleSheet,
-    Text
+  Animated,
+  Dimensions,
+  StatusBar,
+  StyleSheet,
+  Text
 } from 'react-native';
 
 const { width, height } = Dimensions.get('window');
@@ -56,6 +56,7 @@ const SplashScreen2 = () => {
         <Text style={styles.appName}>
           <Text style={styles.meText}>Me</Text>
           <Text style={styles.myselfText}>Myself</Text>
+          <Text style={{color:'#FFD54F'}}>I</Text>
           <Text style={styles.aiText}>.ai</Text>
         </Text>
       </Animated.View>

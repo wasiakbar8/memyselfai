@@ -131,7 +131,7 @@ const CustomDrawer = ({ isVisible, onClose, activeScreen = 'dashboard' }) => {
             break;
           case 'ai-assistant':
             // Add navigation when screen is ready
-            console.log('AI Assistant screen not implemented yet');
+             router.push('./aiassistantscreen');
             break;
           case 'calendar':
             // Add navigation when screen is ready
@@ -209,6 +209,7 @@ const CustomDrawer = ({ isVisible, onClose, activeScreen = 'dashboard' }) => {
               <Text style={styles.brandText}>
                 <Text style={styles.brandMe}>Me</Text>
                 <Text style={styles.brandMyself}>Myself</Text>
+                <Text style={{color:'#FFD700'}}>I</Text>
                 <Text style={styles.brandAi}>.ai</Text>
               </Text>
             </View>

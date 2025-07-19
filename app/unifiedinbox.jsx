@@ -14,6 +14,7 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
+import CustomDrawer from './component/CustomDrawer'; // Adjust the import path as needed
 
 const { width, height } = Dimensions.get('window');
 
@@ -25,6 +26,7 @@ const UnifiedInboxApp = () => {
   const [selectedMessages, setSelectedMessages] = useState(new Set());
   const [sortBy, setSortBy] = useState('time');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false); // Add drawer state
 
   // Sample message data
   const initialMessages = [
@@ -124,10 +126,22 @@ const UnifiedInboxApp = () => {
   useEffect(() => {
     setMessages(initialMessages);
   }, []);
+
+  const router = useRouter();
+
   const gotoprofile = () => {
-      const router =useRouter();
-      router.push('./profile')
-    };
+    router.push('./profile');
+  };
+
+  // Add function to open drawer
+  const openDrawer = () => {
+    setIsDrawerOpen(true);
+  };
+
+  // Add function to close drawer
+  const closeDrawer = () => {
+    setIsDrawerOpen(false);
+  };
 
   const sources = [
     { name: 'All Sources', count: messages.length, color: '#10B981', icon: 'apps' },
@@ -346,20 +360,19 @@ const UnifiedInboxApp = () => {
   );
 
   return (
-    
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
       
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <TouchableOpacity style={styles.menuButton}>
+          <TouchableOpacity style={styles.menuButton} onPress={openDrawer}>
             <Ionicons name="menu" size={24} color="#000" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Unified Inbox</Text>
         </View>
         <TouchableOpacity style={styles.profileButton} onPress={gotoprofile}>
-          <Ionicons name="person-circle" size={32} color="#9CA3AF" />
+           <Ionicons name="person-outline" size={24} color="#000" />
         </TouchableOpacity>
       </View>
 
@@ -376,7 +389,6 @@ const UnifiedInboxApp = () => {
         </View>
         <TouchableOpacity style={styles.newMessageButton} onPress={handleNewMessage}>
           <Ionicons name="add" size={20} color="#000" />
-          
         </TouchableOpacity>
       </View>
 
@@ -490,6 +502,13 @@ const UnifiedInboxApp = () => {
       <TouchableOpacity style={styles.fab} onPress={handleNewMessage}>
         <Ionicons name="add" size={24} color="#000" />
       </TouchableOpacity>
+
+      {/* Custom Drawer */}
+      <CustomDrawer 
+        isVisible={isDrawerOpen} 
+        onClose={closeDrawer} 
+        activeScreen="inbox"
+      />
     </SafeAreaView>
   );
 };

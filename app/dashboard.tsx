@@ -1,4 +1,4 @@
-import { FontAwesome } from '@expo/vector-icons';
+import { FontAwesome, Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
@@ -121,9 +121,7 @@ const Dashboard: React.FC = () => {
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Dashboard</Text>
         <TouchableOpacity style={styles.profileIcon} onPress={handleProfilePress}>
-          <View style={styles.profileCircle}>
-            <Text style={styles.profileText}>JD</Text>
-          </View>
+          <Ionicons name="person-outline" size={24} color="#000" />
         </TouchableOpacity>
       </View>
 
