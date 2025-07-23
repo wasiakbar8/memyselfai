@@ -135,7 +135,7 @@ const CustomDrawer = ({ isVisible, onClose, activeScreen = 'dashboard' }) => {
             break;
           case 'calendar':
             // Add navigation when screen is ready
-            console.log('Calendar screen not implemented yet');
+            router.push('./calendar');
             break;
           case 'settings':
             // Add navigation when screen is ready

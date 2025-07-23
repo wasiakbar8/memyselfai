@@ -1,10 +1,9 @@
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import {
-  Alert,
-  Dimensions,
   FlatList,
+  Modal,
   SafeAreaView,
   ScrollView,
   StatusBar,
@@ -14,864 +13,858 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
-import CustomDrawer from './component/CustomDrawer'; // Adjust the import path as needed
+import CustomDrawer from './component/CustomDrawer'; // Import your CustomDrawer component
 
-const { width, height } = Dimensions.get('window');
+const App = () => {
+  const [activeSource, setActiveSource] = useState('all');
+  const [showNewMessage, setShowNewMessage] = useState(false);
+  const [selectedConversation, setSelectedConversation] = useState(null);
+  const [newMessageText, setNewMessageText] = useState('');
+  const [selectedMessageSource, setSelectedMessageSource] = useState('SMS');
+  const [recipientSearch, setRecipientSearch] = useState('');
+  const [newMessageContent, setNewMessageContent] = useState('');
+  const [isDrawerVisible, setIsDrawerVisible] = useState(false); // Add drawer state
+const gotoprofile =()=>{
+  const router =useRouter();
+  router.push('./profile')
 
-const UnifiedInboxApp = () => {
-  const [messages, setMessages] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedSource, setSelectedSource] = useState('All Sources');
-  const [selectedFolder, setSelectedFolder] = useState('Inbox');
-  const [selectedMessages, setSelectedMessages] = useState(new Set());
-  const [sortBy, setSortBy] = useState('time');
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false); // Add drawer state
-
-  // Sample message data
-  const initialMessages = [
+}
+  const [conversations, setConversations] = useState([
     {
-      id: 1,
-      sender: 'Sarah Johnson',
-      subject: 'Are we still on for our meeting at 2pm today?',
-      preview: 'Just checking if our meeting is still happening...',
-      time: '10:21 AM',
+      id: '1',
+      name: 'Sarah Johnson',
       source: 'WhatsApp',
-      folder: 'Inbox',
-      starred: false,
-      read: false,
-      avatar: 'SJ',
-      color: '#25D366'
+      time: '10:32 AM',
+      preview: 'Hey, are we still on for the meeting at 2pm today?...',
+      unread: true,
+      avatar: '👩‍💼',
+      messages: [
+        { id: 1, text: 'Hi there! I wanted to check in about our project timeline. Are we still on track for the delivery next week?', sender: 'them', time: 'Yesterday, 4:32 PM' },
+        { id: 2, text: 'Yes, everything is going according to plan. I\'ve completed the design phase and the development team is making good progress.', sender: 'me', time: 'Yesterday, 4:35 PM' },
+        { id: 3, text: 'That\'s great to hear! Could we schedule a quick call tomorrow to go over the details before presenting to the client?', sender: 'them', time: 'Yesterday, 4:37 PM' },
+        { id: 4, text: 'Absolutely. How does tomorrow at 2pm sound? I\'ll have all the materials ready by then.', sender: 'me', time: 'Yesterday, 4:40 PM' },
+        { id: 5, text: 'Perfect! I\'ll send a calendar invite. Also, do you have the latest version of the presentation?', sender: 'them', time: 'Yesterday, 6:02 PM' },
+        { id: 6, text: 'I\'ll send it over right after this conversation. Just putting the finishing touches on it.', sender: 'me', time: 'Yesterday, 6:10 PM' },
+        { id: 7, text: 'Hey, are we still on for the meeting at 2pm today?', sender: 'them', time: '10:32 AM' }
+      ]
     },
     {
-      id: 2,
-      sender: 'Acme Corp',
-      subject: 'Q 2 Performance Report - Please review the attached...',
-      preview: 'Please find the quarterly performance report attached...',
-      time: '9:15 AM',
+      id: '2',
+      name: 'Acme Corp',
       source: 'Email',
-      folder: 'Inbox',
-      starred: false,
-      read: true,
-      avatar: 'AC',
-      color: '#4285F4'
+      time: '9:16 AM',
+      preview: 'Q 2 Performance Report - Please review the attac...',
+      unread: false,
+      avatar: '🏢',
+      messages: [
+        { id: 1, text: 'Q 2 Performance Report - Please review the attached quarterly performance report and let us know if you have any questions.', sender: 'them', time: '9:16 AM' }
+      ]
     },
     {
-      id: 3,
-      sender: 'Project Team',
-      subject: 'New file pushed latest updates to the repository...',
-      preview: 'Latest updates have been pushed to the main branch...',
+      id: '3',
+      name: 'Project Team',
+      source: 'WhatsApp',
       time: '8:47 AM',
-      source: 'Slack',
-      folder: 'Inbox',
-      starred: false,
-      read: true,
-      avatar: 'PT',
-      color: '#4A154B'
+      preview: 'Alex I\'ve pushed the latest updates to the reposit...',
+      unread: true,
+      avatar: '👥',
+      messages: [
+        { id: 1, text: 'Alex I\'ve pushed the latest updates to the repository. Can you review the changes when you get a chance?', sender: 'them', time: '8:47 AM' }
+      ]
     },
     {
-      id: 4,
-      sender: 'Michael Chen',
-      subject: 'Your package was delivered. The access code is...',
-      preview: 'Your package has been delivered to your address...',
-      time: 'Yesterday',
+      id: '4',
+      name: 'Michael Chen',
       source: 'SMS',
-      folder: 'Inbox',
-      starred: false,
-      read: true,
-      avatar: 'MC',
-      color: '#34C759'
+      time: 'Yesterday',
+      preview: 'Your package has been delivered. The access co...',
+      unread: true,
+      avatar: '👨',
+      messages: [
+        { id: 1, text: 'Your package has been delivered. The access code is 1234. Thanks for your business!', sender: 'them', time: 'Yesterday' }
+      ]
     },
     {
-      id: 5,
-      sender: 'TechConf 2024',
-      subject: 'Your speaker proposal for "AI in Productivity Tools"...',
-      preview: 'We are pleased to inform you that your proposal...',
-      time: 'Yesterday',
+      id: '5',
+      name: 'TechConf 2024',
       source: 'Email',
-      folder: 'Inbox',
-      starred: true,
-      read: false,
-      avatar: 'TC',
-      color: '#4285F4'
-    },
-    {
-      id: 6,
-      sender: 'Lisa Wong',
-      subject: 'Can we schedule a call to discuss the final version...',
-      preview: 'I would like to schedule a call to discuss...',
       time: 'Yesterday',
-      source: 'WhatsApp',
-      folder: 'Inbox',
-      starred: false,
-      read: true,
-      avatar: 'LW',
-      color: '#25D366'
+      preview: 'Your speaker proposal for "AI in Productivity Tool...',
+      unread: true,
+      avatar: '📧',
+      messages: [
+        { id: 1, text: 'Your speaker proposal for "AI in Productivity Tools" has been accepted! Congratulations and welcome to TechConf 2024.', sender: 'them', time: 'Yesterday' }
+      ]
     },
     {
-      id: 7,
-      sender: 'Bank Alert',
-      subject: 'Transaction alert: $250 withdrawal from ATM...',
-      preview: 'A withdrawal of $250 has been made from your account...',
-      time: '2 days ago',
+      id: '6',
+      name: 'Lisa Wong',
+      source: 'WhatsApp',
+      time: 'Yesterday',
+      preview: 'Can you send me the final version of the presenta...',
+      unread: true,
+      avatar: '👩',
+      messages: [
+        { id: 1, text: 'Can you send me the final version of the presentation slides? I need them for the client meeting tomorrow.', sender: 'them', time: 'Yesterday' }
+      ]
+    },
+    {
+      id: '7',
+      name: 'Bank Alert',
       source: 'SMS',
-      folder: 'Inbox',
-      starred: false,
-      read: true,
-      avatar: 'BA',
-      color: '#34C759'
+      time: '2 days ago',
+      preview: 'Your account ending in 4821 has been charged...',
+      unread: true,
+      avatar: '🏦',
+      messages: [
+        { id: 1, text: 'Your account ending in 4821 has been charged $99.99 for your monthly subscription. Balance: $1,247.83', sender: 'them', time: '2 days ago' }
+      ]
     }
+  ]);
+
+  const messageSources = [
+    { name: 'WhatsApp', icon: '💬', color: '#25D366', count: 3 },
+    { name: 'Email', icon: '📧', color: '#1877F2', count: 2 },
+    { name: 'SMS', icon: '💬', color: '#8B5CF6', count: 2 }
   ];
 
-  useEffect(() => {
-    setMessages(initialMessages);
+  const getSourceIcon = useCallback((source) => {
+    switch (source) {
+      case 'WhatsApp': return { icon: '💬', color: '#25D366' };
+      case 'Email': return { icon: '📧', color: '#1877F2' };
+      case 'SMS': return { icon: '💬', color: '#8B5CF6' };
+      default: return { icon: '💬', color: '#8B5CF6' };
+    }
   }, []);
 
-  const router = useRouter();
+  const filteredConversations = activeSource === 'all' 
+    ? conversations 
+    : conversations.filter(conv => conv.source === activeSource);
 
-  const gotoprofile = () => {
-    router.push('./profile');
-  };
+  const sendMessage = useCallback(() => {
+    if (!newMessageText.trim() || !selectedConversation) return;
 
-  // Add function to open drawer
-  const openDrawer = () => {
-    setIsDrawerOpen(true);
-  };
+    const updatedConversations = conversations.map(conv => {
+      if (conv.id === selectedConversation.id) {
+        const newMessage = {
+          id: Date.now(),
+          text: newMessageText,
+          sender: 'me',
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        };
+        const updatedConv = {
+          ...conv,
+          messages: [...conv.messages, newMessage],
+          preview: newMessageText,
+          time: 'Just now'
+        };
+        setSelectedConversation(updatedConv);
+        return updatedConv;
+      }
+      return conv;
+    });
+    setConversations(updatedConversations);
+    setNewMessageText('');
+  }, [newMessageText, selectedConversation, conversations]);
 
-  // Add function to close drawer
-  const closeDrawer = () => {
-    setIsDrawerOpen(false);
-  };
+  const createNewConversation = useCallback(() => {
+    if (!recipientSearch.trim() || !newMessageContent.trim()) return;
 
-  const sources = [
-    { name: 'All Sources', count: messages.length, color: '#10B981', icon: 'apps' },
-    { name: 'WhatsApp', count: messages.filter(m => m.source === 'WhatsApp').length, color: '#25D366', icon: 'logo-whatsapp' },
-    { name: 'Email', count: messages.filter(m => m.source === 'Email').length, color: '#4285F4', icon: 'mail' },
-    { name: 'Slack', count: messages.filter(m => m.source === 'Slack').length, color: '#4A154B', icon: 'chatbubbles' },
-    { name: 'SMS', count: messages.filter(m => m.source === 'SMS').length, color: '#34C759', icon: 'chatbox' }
-  ];
-
-  const folders = [
-    { name: 'Inbox', count: messages.filter(m => m.folder === 'Inbox').length, icon: 'inbox' },
-    { name: 'Starred', count: messages.filter(m => m.starred).length, icon: 'star' },
-    { name: 'Sent', count: 0, icon: 'send' }
-  ];
-
-  const filteredMessages = messages.filter(message => {
-    const matchesSearch = message.sender.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         message.subject.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesSource = selectedSource === 'All Sources' || message.source === selectedSource;
-    const matchesFolder = selectedFolder === 'Inbox' ? message.folder === 'Inbox' :
-                         selectedFolder === 'Starred' ? message.starred : true;
-    
-    return matchesSearch && matchesSource && matchesFolder;
-  });
-
-  const sortedMessages = [...filteredMessages].sort((a, b) => {
-    if (sortBy === 'time') {
-      return b.id - a.id; // Assuming higher ID = newer
-    } else if (sortBy === 'sender') {
-      return a.sender.localeCompare(b.sender);
-    } else if (sortBy === 'unread') {
-      return a.read - b.read;
-    }
-    return 0;
-  });
-
-  const handleMessageSelect = (messageId) => {
-    const newSelected = new Set(selectedMessages);
-    if (newSelected.has(messageId)) {
-      newSelected.delete(messageId);
-    } else {
-      newSelected.add(messageId);
-    }
-    setSelectedMessages(newSelected);
-  };
-
-  const handleStarToggle = (messageId) => {
-    setMessages(messages.map(msg => 
-      msg.id === messageId ? { ...msg, starred: !msg.starred } : msg
-    ));
-  };
-
-  const handleMarkAsRead = () => {
-    setMessages(messages.map(msg => 
-      selectedMessages.has(msg.id) ? { ...msg, read: true } : msg
-    ));
-    setSelectedMessages(new Set());
-  };
-
-  const handleDeleteMessages = () => {
-    Alert.alert(
-      'Delete Messages',
-      `Are you sure you want to delete ${selectedMessages.size} message(s)?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Delete', 
-          style: 'destructive',
-          onPress: () => {
-            setMessages(messages.filter(msg => !selectedMessages.has(msg.id)));
-            setSelectedMessages(new Set());
-          }
+    const newConversation = {
+      id: Date.now().toString(),
+      name: recipientSearch,
+      source: selectedMessageSource,
+      time: 'Just now',
+      preview: newMessageContent,
+      unread: false,
+      avatar: '👤',
+      messages: [
+        {
+          id: Date.now(),
+          text: newMessageContent,
+          sender: 'me',
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         }
       ]
-    );
-  };
-
-  const handleNewMessage = () => {
-    const newMessage = {
-      id: Date.now(),
-      sender: 'New Contact',
-      subject: 'New message subject',
-      preview: 'This is a new message...',
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      source: 'Email',
-      folder: 'Inbox',
-      starred: false,
-      read: false,
-      avatar: 'NC',
-      color: '#4285F4'
     };
-    setMessages([newMessage, ...messages]);
-  };
 
-  const getSourceColor = (source) => {
-    switch(source) {
-      case 'WhatsApp': return '#25D366';
-      case 'Email': return '#4285F4';
-      case 'Slack': return '#4A154B';
-      case 'SMS': return '#34C759';
-      default: return '#6B7280';
-    }
-  };
+    setConversations([newConversation, ...conversations]);
+    setShowNewMessage(false);
+    setRecipientSearch('');
+    setNewMessageContent('');
+    setSelectedMessageSource('SMS');
+    
+    // Open the new conversation
+    setSelectedConversation(newConversation);
+  }, [recipientSearch, newMessageContent, selectedMessageSource, conversations]);
 
-  const renderMessage = ({ item }) => (
-    <TouchableOpacity
-      style={[
-        styles.messageItem,
-        selectedMessages.has(item.id) && styles.selectedMessage,
-        !item.read && styles.unreadMessage
-      ]}
-      onPress={() => handleMessageSelect(item.id)}
-    >
-      <View style={styles.messageContent}>
+  const MessageItem = useCallback(({ item }) => {
+    const sourceConfig = getSourceIcon(item.source);
+    return (
+      <TouchableOpacity 
+        style={styles.messageItem}
+        onPress={() => setSelectedConversation(item)}
+      >
         <View style={styles.messageLeft}>
-          <TouchableOpacity
-            style={styles.checkbox}
-            onPress={() => handleMessageSelect(item.id)}
-          >
-            {selectedMessages.has(item.id) && (
-              <Ionicons name="checkmark" size={14} color="#007AFF" />
-            )}
-          </TouchableOpacity>
-          <View style={[styles.avatar, { backgroundColor: item.color + '20' }]}>
-            <Text style={[styles.avatarText, { color: item.color }]}>
-              {item.avatar}
-            </Text>
+          <View style={[styles.sourceIndicator, { backgroundColor: sourceConfig.color }]}>
+            <Text style={styles.sourceIcon}>{sourceConfig.icon}</Text>
           </View>
-        </View>
-        
-        <View style={styles.messageMain}>
-          <View style={styles.messageHeader}>
-            <Text style={[styles.senderName, !item.read && styles.unreadText]}>
-              {item.sender}
-            </Text>
-            <View style={styles.messageRight}>
-              <Text style={styles.timeText}>{item.time}</Text>
-              <TouchableOpacity
-                style={styles.starButton}
-                onPress={() => handleStarToggle(item.id)}
-              >
-                <Ionicons
-                  name={item.starred ? "star" : "star-outline"}
-                  size={16}
-                  color={item.starred ? "#FFD700" : "#9CA3AF"}
-                />
-              </TouchableOpacity>
+          <View style={styles.messageContent}>
+            <View style={styles.messageHeader}>
+              <Text style={styles.senderName}>{item.name}</Text>
+              <Text style={styles.messageTime}>{item.time}</Text>
             </View>
-          </View>
-          
-          <Text style={[styles.subjectText, !item.read && styles.unreadText]}>
-            {item.subject}
-          </Text>
-          
-          <View style={styles.previewContainer}>
-            <Text style={styles.previewText} numberOfLines={1}>
+            <Text style={[styles.messagePreview, item.unread && styles.unreadPreview]}>
               {item.preview}
             </Text>
-            <View style={[styles.sourceIndicator, { backgroundColor: getSourceColor(item.source) }]} />
           </View>
         </View>
+        {item.unread && <View style={styles.unreadDot} />}
+      </TouchableOpacity>
+    );
+  }, [getSourceIcon]);
+
+  const ConversationView = useCallback(() => (
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor="white" />
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => setSelectedConversation(null)}>
+          <Ionicons name="arrow-back" size={24} color="#000" />
+        </TouchableOpacity>
+        <View style={styles.conversationHeader}>
+          <Text style={styles.conversationName}>{selectedConversation?.name}</Text>
+          <Text style={styles.conversationSource}>
+            {selectedConversation?.source} • Business Contact
+          </Text>
+        </View>
+        <View style={styles.headerRight}>
+          <TouchableOpacity style={styles.headerButton}>
+            <Ionicons name="star-outline" size={20} color="#666" />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.headerButton}>
+            <Ionicons name="trash-outline" size={20} color="#666" />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.headerButton}>
+            <Ionicons name="ellipsis-vertical" size={20} color="#666" />
+          </TouchableOpacity>
+        </View>
       </View>
-    </TouchableOpacity>
-  );
 
-  const renderSourceButton = (source) => (
-    <TouchableOpacity
-      key={source.name}
-      style={[
-        styles.sourceButton,
-        selectedSource === source.name && styles.selectedSourceButton
-      ]}
-      onPress={() => setSelectedSource(source.name)}
-    >
-      <View style={[styles.sourceIndicator, { backgroundColor: source.color }]} />
-      <Text style={[
-        styles.sourceText,
-        selectedSource === source.name && styles.selectedSourceText
-      ]}>
-        {source.name}
-      </Text>
-      {source.count > 0 && (
-        <View style={styles.countBadge}>
-          <Text style={styles.countText}>{source.count}</Text>
-        </View>
-      )}
-    </TouchableOpacity>
-  );
+      <ScrollView style={styles.messagesContainer} showsVerticalScrollIndicator={false}>
+        {selectedConversation?.messages.map((message) => (
+          <View
+            key={message.id}
+            style={[
+              styles.messageBubble,
+              message.sender === 'me' ? styles.myMessage : styles.theirMessage
+            ]}
+          >
+            <Text style={[
+              styles.messageText,
+              message.sender === 'me' ? styles.myMessageText : styles.theirMessageText
+            ]}>
+              {message.text}
+            </Text>
+            <Text style={[
+              styles.messageTimestamp,
+              message.sender === 'me' ? styles.myTimestamp : styles.theirTimestamp
+            ]}>
+              {message.time}
+            </Text>
+          </View>
+        ))}
+      </ScrollView>
 
-  const renderFolderButton = (folder) => (
-    <TouchableOpacity
-      key={folder.name}
-      style={[
-        styles.folderButton,
-        selectedFolder === folder.name && styles.selectedFolderButton
-      ]}
-      onPress={() => setSelectedFolder(folder.name)}
-    >
-      <Ionicons
-        name={folder.icon}
-        size={16}
-        color={selectedFolder === folder.name ? "#F59E0B" : "#6B7280"}
-      />
-      <Text style={[
-        styles.folderText,
-        selectedFolder === folder.name && styles.selectedFolderText
-      ]}>
-        {folder.name}
-      </Text>
-      {folder.count > 0 && (
-        <View style={styles.countBadge}>
-          <Text style={styles.countText}>{folder.count}</Text>
+      <View style={styles.inputContainer}>
+        <View style={styles.messageInputRow}>
+          <TouchableOpacity style={styles.attachButton}>
+            <Ionicons name="attach" size={24} color="#666" />
+          </TouchableOpacity>
+          <TextInput
+            style={styles.messageInput}
+            placeholder="Type your message..."
+            value={newMessageText}
+            onChangeText={setNewMessageText}
+            multiline={true}
+            maxLength={1000}
+            textAlignVertical="top"
+            blurOnSubmit={false}
+            returnKeyType="default"
+            enablesReturnKeyAutomatically={false}
+          />
+          <TouchableOpacity 
+            style={[styles.sendButton, !newMessageText.trim() && styles.sendButtonDisabled]} 
+            onPress={sendMessage}
+            disabled={!newMessageText.trim()}
+          >
+            <Ionicons name="send" size={20} color="white" />
+          </TouchableOpacity>
         </View>
-      )}
-    </TouchableOpacity>
-  );
+        <Text style={styles.inputHelper}>
+          AI suggestions available ✨ Generate reply 📎 Quick responses
+        </Text>
+      </View>
+    </SafeAreaView>
+  ), [selectedConversation, newMessageText, sendMessage]);
+
+  if (selectedConversation) {
+    return <ConversationView />;
+  }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-      
-      {/* Header */}
-      <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <TouchableOpacity style={styles.menuButton} onPress={openDrawer}>
+    <>
+      <SafeAreaView style={styles.container}>
+        <StatusBar barStyle="dark-content" backgroundColor="white" />
+        
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => setIsDrawerVisible(true)}>
             <Ionicons name="menu" size={24} color="#000" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Unified Inbox</Text>
+          <TouchableOpacity onPress={gotoprofile}>
+            <Ionicons name="person-outline" size={24} color="#000" />
+          </TouchableOpacity>
         </View>
-        <TouchableOpacity style={styles.profileButton} onPress={gotoprofile}>
-           <Ionicons name="person-outline" size={24} color="#000" />
-        </TouchableOpacity>
-      </View>
 
-      {/* Search Bar */}
-      <View style={styles.searchContainer}>
-        <View style={styles.searchBar}>
-          <Ionicons name="search" size={20} color="#9CA3AF" style={styles.searchIcon} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search messages..."
-            value={searchTerm}
-            onChangeText={setSearchTerm}
-          />
+        {/* Search Bar */}
+        <View style={styles.searchContainer}>
+          <View style={styles.searchBar}>
+            <Ionicons name="search" size={20} color="#666" style={styles.searchIcon} />
+            <TextInput 
+              placeholder="Search messages..." 
+              style={styles.searchInput}
+              placeholderTextColor="#666"
+            />
+          </View>
+          <TouchableOpacity 
+            style={styles.newMessageButton}
+            onPress={() => setShowNewMessage(true)}
+          >
+            <Text style={styles.newMessageText}>New Messages</Text>
+          </TouchableOpacity>
         </View>
-        <TouchableOpacity style={styles.newMessageButton} onPress={handleNewMessage}>
-          <Ionicons name="add" size={20} color="#000" />
-        </TouchableOpacity>
-      </View>
 
-      <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
         {/* Message Sources */}
-        <View style={styles.section}>
+        <View style={styles.sourcesContainer}>
           <Text style={styles.sectionTitle}>Message Sources</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalScroll}>
-            <View style={styles.sourceContainer}>
-              {sources.map(renderSourceButton)}
-            </View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.sourcesScrollView}>
+            <TouchableOpacity 
+              style={[styles.sourceChip, activeSource === 'all' && styles.activeSourceChip]}
+              onPress={() => setActiveSource('all')}
+            >
+              <Text style={styles.sourceChipText}>All</Text>
+            </TouchableOpacity>
+            {messageSources.map((source) => (
+              <TouchableOpacity
+                key={source.name}
+                style={[styles.sourceChip, activeSource === source.name && styles.activeSourceChip]}
+                onPress={() => setActiveSource(source.name)}
+              >
+                <Text style={styles.sourceIcon}>{source.icon}</Text>
+                <Text style={styles.sourceChipText}>{source.name}</Text>
+                {source.count > 0 && (
+                  <View style={[styles.sourceBadge, { backgroundColor: source.color }]}>
+                    <Text style={styles.sourceBadgeText}>{source.count}</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            ))}
           </ScrollView>
         </View>
 
-        {/* Folders */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Folders</Text>
-          <View style={styles.folderContainer}>
-            {folders.map(renderFolderButton)}
-          </View>
-        </View>
-
-        {/* Messages Header */}
-        <View style={styles.messagesHeader}>
-          <Text style={styles.sectionTitle}>Messages</Text>
-          <View style={styles.messageActions}>
-            <TouchableOpacity
-              style={styles.actionButton}
-              onPress={() => setIsFilterOpen(!isFilterOpen)}
-            >
-              <Ionicons name="filter" size={16} color="#6B7280" />
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.actionButton}
-              onPress={() => setSortBy(sortBy === 'time' ? 'sender' : sortBy === 'sender' ? 'unread' : 'time')}
-            >
-              <Ionicons name="swap-vertical" size={16} color="#6B7280" />
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Filter Options */}
-        {isFilterOpen && (
-          <View style={styles.filterContainer}>
-            <Text style={styles.filterLabel}>Sort by:</Text>
-            <View style={styles.sortOptions}>
-              {['time', 'sender', 'unread'].map((option) => (
-                <TouchableOpacity
-                  key={option}
-                  style={[
-                    styles.sortOption,
-                    sortBy === option && styles.selectedSortOption
-                  ]}
-                  onPress={() => setSortBy(option)}
-                >
-                  <Text style={[
-                    styles.sortOptionText,
-                    sortBy === option && styles.selectedSortOptionText
-                  ]}>
-                    {option.charAt(0).toUpperCase() + option.slice(1)}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-        )}
-
-        {/* Action Bar */}
-        {selectedMessages.size > 0 && (
-          <View style={styles.actionBar}>
-            <Text style={styles.selectedCount}>
-              {selectedMessages.size} selected
-            </Text>
-            <View style={styles.actionButtons}>
-              <TouchableOpacity
-                style={styles.actionButton}
-                onPress={handleMarkAsRead}
-              >
-                <Text style={styles.actionButtonText}>Mark Read</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.actionButton, styles.deleteButton]}
-                onPress={handleDeleteMessages}
-              >
-                <Text style={[styles.actionButtonText, styles.deleteButtonText]}>Delete</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
-
         {/* Messages List */}
-        <View style={styles.messagesContainer}>
-          {sortedMessages.length === 0 ? (
-            <View style={styles.emptyState}>
-              <Ionicons name="mail-outline" size={48} color="#9CA3AF" />
-              <Text style={styles.emptyText}>No messages found</Text>
-            </View>
-          ) : (
-            <FlatList
-              data={sortedMessages}
-              renderItem={renderMessage}
-              keyExtractor={(item) => item.id.toString()}
-              scrollEnabled={false}
-              ItemSeparatorComponent={() => <View style={styles.separator} />}
-            />
-          )}
+        <View style={styles.messagesSection}>
+          <View style={styles.messagesSectionHeader}>
+            <Text style={styles.sectionTitle}>Messages</Text>
+            <TouchableOpacity>
+              <MaterialIcons name="filter-list" size={20} color="#666" />
+            </TouchableOpacity>
+          </View>
+
+          <FlatList
+            data={filteredConversations}
+            keyExtractor={(item) => item.id}
+            renderItem={MessageItem}
+            showsVerticalScrollIndicator={false}
+            style={styles.messagesList}
+          />
         </View>
-      </ScrollView>
 
-      {/* Floating Action Button */}
-      <TouchableOpacity style={styles.fab} onPress={handleNewMessage}>
-        <Ionicons name="add" size={24} color="#000" />
-      </TouchableOpacity>
+        {/* New Message Modal */}
+        <Modal
+          visible={showNewMessage}
+          animationType="slide"
+          presentationStyle="pageSheet"
+        >
+          <SafeAreaView style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <TouchableOpacity onPress={() => setShowNewMessage(false)}>
+                <Ionicons name="close" size={24} color="#000" />
+              </TouchableOpacity>
+              <Text style={styles.modalTitle}>New message</Text>
+              <View style={{ width: 24 }} />
+            </View>
 
-      {/* Custom Drawer */}
+            <View style={styles.modalContent}>
+              <Text style={styles.modalSectionTitle}>Send via</Text>
+              <View style={styles.messageSourceOptions}>
+                {['SMS', 'iMessage', 'WhatsApp', 'Telegram'].map((source) => (
+                  <TouchableOpacity
+                    key={source}
+                    style={[
+                      styles.messageSourceOption,
+                      selectedMessageSource === source && styles.selectedMessageSource
+                    ]}
+                    onPress={() => setSelectedMessageSource(source)}
+                  >
+                    <Text style={[
+                      styles.messageSourceOptionText,
+                      selectedMessageSource === source && styles.selectedMessageSourceText
+                    ]}>
+                      {source}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              <Text style={styles.modalSectionTitle}>To</Text>
+              <TextInput
+                style={styles.recipientInput}
+                placeholder="Search or enter a number"
+                placeholderTextColor="#999"
+                value={recipientSearch}
+                onChangeText={setRecipientSearch}
+              />
+
+              <Text style={styles.modalSectionTitle}>Message</Text>
+              <TextInput
+                style={styles.messageContentInput}
+                placeholder="Type your message..."
+                placeholderTextColor="#999"
+                value={newMessageContent}
+                onChangeText={setNewMessageContent}
+                multiline
+                maxLength={500}
+                textAlignVertical="top"
+              />
+            </View>
+
+            <TouchableOpacity 
+              style={[styles.nextButton, (!recipientSearch.trim() || !newMessageContent.trim()) && styles.nextButtonDisabled]}
+              onPress={createNewConversation}
+              disabled={!recipientSearch.trim() || !newMessageContent.trim()}
+            >
+              <Text style={[styles.nextButtonText, (!recipientSearch.trim() || !newMessageContent.trim()) && styles.nextButtonTextDisabled]}>Next</Text>
+            </TouchableOpacity>
+          </SafeAreaView>
+        </Modal>
+
+        {/* Floating Action Button */}
+        <TouchableOpacity 
+          style={styles.fab}
+          onPress={() => setShowNewMessage(true)}
+        >
+          <Ionicons name="add" size={24} color="white" />
+        </TouchableOpacity>
+      </SafeAreaView>
+
+      {/* Custom Drawer Component */}
       <CustomDrawer 
-        isVisible={isDrawerOpen} 
-        onClose={closeDrawer} 
-        activeScreen="inbox"
+        isVisible={isDrawerVisible}
+        onClose={() => setIsDrawerVisible(false)}
+        activeScreen="inbox" // Set the active screen to match the drawer's menu items
       />
-    </SafeAreaView>
+    </>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#fff',
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: 20,
+    paddingVertical: 15,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
-  },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  menuButton: {
-    marginRight: 12,
+    borderBottomColor: '#f0f0f0',
   },
   headerTitle: {
     fontSize: 18,
     fontWeight: '600',
     color: '#000',
   },
-  profileButton: {
-    padding: 4,
-  },
   searchContainer: {
     flexDirection: 'row',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: 20,
+    paddingVertical: 15,
     alignItems: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
-
+    gap: 10,
   },
   searchBar: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F9FAFB',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    marginRight: 8,
+    backgroundColor: '#f8f8f8',
+    borderRadius: 25,
+    paddingHorizontal: 15,
+    paddingVertical: 10,
   },
   searchIcon: {
-    marginRight: 8,
+    marginRight: 10,
   },
   searchInput: {
     flex: 1,
-    paddingVertical: 10,
     fontSize: 16,
     color: '#000',
   },
   newMessageButton: {
-    backgroundColor: '#FDE047',
-    paddingHorizontal: 16,
+    backgroundColor: '#FFD700',
+    paddingHorizontal: 15,
     paddingVertical: 10,
-    borderRadius: 8,
+    borderRadius: 20,
   },
-  scrollContainer: {
-    flex: 1,
-  },
-  section: {
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
-  },
-  sectionTitle: {
+  newMessageText: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#6B7280',
-    marginBottom: 12,
+    color: '#000',
   },
-  horizontalScroll: {
-    marginHorizontal: -16,
+  sourcesContainer: {
+    paddingHorizontal: 20,
+    paddingBottom: 15,
   },
-  sourceContainer: {
-    flexDirection: 'row',
-    paddingHorizontal: 16,
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#000',
+    marginBottom: 15,
   },
-  sourceButton: {
+  sourcesScrollView: {
+    marginBottom: 10,
+  },
+  sourceChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F3F4F6',
-    paddingHorizontal: 12,
+    backgroundColor: '#f0f0f0',
+    paddingHorizontal: 15,
     paddingVertical: 8,
     borderRadius: 20,
-    marginRight: 8,
+    marginRight: 10,
   },
-  selectedSourceButton: {
-    backgroundColor: '#DBEAFE',
-    borderWidth: 1,
-    borderColor: '#3B82F6',
+  activeSourceChip: {
+    backgroundColor: '#E3F2FD',
   },
-  sourceIndicator: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginRight: 8,
-  },
-  sourceText: {
+  sourceChipText: {
     fontSize: 14,
-    color: '#6B7280',
+    color: '#333',
+    marginLeft: 5,
   },
-  selectedSourceText: {
-    color: '#3B82F6',
+  sourceIcon: {
+    fontSize: 16,
   },
-  countBadge: {
-    backgroundColor: '#FFFFFF',
+  sourceBadge: {
+    marginLeft: 8,
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 10,
-    marginLeft: 6,
+    minWidth: 18,
+    alignItems: 'center',
   },
-  countText: {
+  sourceBadgeText: {
+    color: 'white',
     fontSize: 12,
-    color: '#6B7280',
+    fontWeight: '600',
   },
-  folderContainer: {
-    flexDirection: 'row',
+  messagesSection: {
+    flex: 1,
+    paddingHorizontal: 20,
   },
-  folderButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F3F4F6',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
-    marginRight: 12,
-  },
-  selectedFolderButton: {
-    backgroundColor: '#FEF3C7',
-    borderWidth: 1,
-    borderColor: '#F59E0B',
-  },
-  folderText: {
-    fontSize: 14,
-    color: '#6B7280',
-    marginLeft: 8,
-  },
-  selectedFolderText: {
-    color: '#F59E0B',
-  },
-  messagesHeader: {
+  messagesSectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    marginBottom: 15,
   },
-  messageActions: {
-    flexDirection: 'row',
-  },
-  actionButton: {
-    padding: 8,
-    marginLeft: 8,
-    backgroundColor: '#F3F4F6',
-    borderRadius: 6,
-  },
-  filterContainer: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: '#F9FAFB',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
-  },
-  filterLabel: {
-    fontSize: 14,
-    color: '#6B7280',
-    marginBottom: 8,
-  },
-  sortOptions: {
-    flexDirection: 'row',
-  },
-  sortOption: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 6,
-    marginRight: 8,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-  },
-  selectedSortOption: {
-    backgroundColor: '#3B82F6',
-    borderColor: '#3B82F6',
-  },
-  sortOptionText: {
-    fontSize: 14,
-    color: '#6B7280',
-  },
-  selectedSortOptionText: {
-    color: '#FFFFFF',
-  },
-  actionBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: '#EFF6FF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
-  },
-  selectedCount: {
-    fontSize: 14,
-    color: '#3B82F6',
-  },
-  actionButtons: {
-    flexDirection: 'row',
-  },
-  actionButtonText: {
-    fontSize: 14,
-    color: '#FFFFFF',
-  },
-  deleteButton: {
-    backgroundColor: '#EF4444',
-    marginLeft: 8,
-  },
-  deleteButtonText: {
-    color: '#FFFFFF',
-  },
-  messagesContainer: {
+  messagesList: {
     flex: 1,
   },
-  emptyState: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 48,
-  },
-  emptyText: {
-    fontSize: 16,
-    color: '#9CA3AF',
-    marginTop: 12,
-  },
   messageItem: {
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  selectedMessage: {
-    backgroundColor: '#EFF6FF',
-  },
-  unreadMessage: {
-    backgroundColor: '#F0F9FF',
-  },
-  messageContent: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f5f5f5',
   },
   messageLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginRight: 12,
+    flex: 1,
   },
-  checkbox: {
-    width: 20,
-    height: 20,
-    borderWidth: 1,
-    borderColor: '#D1D5DB',
-    borderRadius: 4,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 8,
-    backgroundColor: '#FFFFFF',
-  },
-  avatar: {
+  sourceIndicator: {
     width: 40,
     height: 40,
     borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
+    marginRight: 15,
   },
-  avatarText: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  messageMain: {
+  messageContent: {
     flex: 1,
   },
   messageHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 4,
+    marginBottom: 5,
   },
   senderName: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#111827',
-    flex: 1,
-  },
-  messageRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  timeText: {
-    fontSize: 12,
-    color: '#9CA3AF',
-    marginRight: 8,
-  },
-  starButton: {
-    padding: 4,
-  },
-  subjectText: {
-    fontSize: 14,
-    color: '#6B7280',
-    marginBottom: 4,
-  },
-  unreadText: {
+    fontSize: 16,
     fontWeight: '600',
-    color: '#111827',
+    color: '#000',
   },
-  previewContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+  messageTime: {
+    fontSize: 14,
+    color: '#666',
   },
-  previewText: {
-    fontSize: 12,
-    color: '#9CA3AF',
-    flex: 1,
+  messagePreview: {
+    fontSize: 14,
+    color: '#666',
+    lineHeight: 20,
   },
-  sourceIndicatorSmall: {
+  unreadPreview: {
+    color: '#000',
+    fontWeight: '500',
+  },
+  unreadDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    marginLeft: 8,
-  },
-  separator: {
-    height: 1,
-    backgroundColor: '#F3F4F6',
-    marginHorizontal: 16,
+    backgroundColor: '#FFD700',
   },
   fab: {
     position: 'absolute',
-    bottom: 24,
-    right: 24,
+    bottom: 20,
+    right: 20,
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#FDE047',
+    backgroundColor: '#FFD700',
     alignItems: 'center',
     justifyContent: 'center',
+    elevation: 8,
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#000',
+  },
+  modalContent: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingTop: 20,
+  },
+  modalSectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#000',
+    marginBottom: 15,
+  },
+  messageSourceOptions: {
+    flexDirection: 'row',
+    marginBottom: 30,
+  },
+  messageSourceOption: {
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    borderRadius: 20,
+    backgroundColor: '#f0f0f0',
+    marginRight: 10,
+  },
+  selectedMessageSource: {
+    backgroundColor: '#E3F2FD',
+  },
+  messageSourceOptionText: {
+    fontSize: 14,
+    color: '#333',
+  },
+  selectedMessageSourceText: {
+    color: '#1976D2',
+    fontWeight: '600',
+  },
+  recipientInput: {
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    borderRadius: 8,
+    paddingHorizontal: 15,
+    paddingVertical: 12,
+    fontSize: 16,
+    backgroundColor: '#f9f9f9',
+    marginBottom: 20,
+  },
+  messageContentInput: {
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    borderRadius: 8,
+    paddingHorizontal: 15,
+    paddingVertical: 12,
+    fontSize: 16,
+    backgroundColor: '#f9f9f9',
+    minHeight: 100,
+    maxHeight: 200,
+    textAlignVertical: 'top',
+  },
+  nextButton: {
+    backgroundColor: '#FFD700',
+    marginHorizontal: 20,
+    marginBottom: 20,
+    paddingVertical: 15,
+    borderRadius: 25,
+    alignItems: 'center',
+  },
+  nextButtonDisabled: {
+    backgroundColor: '#ccc',
+  },
+  nextButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#000',
+  },
+  nextButtonTextDisabled: {
+    color: '#666',
+  },
+  conversationHeader: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  conversationName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#000',
+  },
+  conversationSource: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 2,
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  headerButton: {
+    marginLeft: 15,
+  },
+  messagesContainer: {
+    flex: 1,
+    paddingHorizontal: 20,
+  },
+  messageBubble: {
+    maxWidth: '80%',
+    padding: 12,
+    borderRadius: 18,
+    marginVertical: 2,
+  },
+  myMessage: {
+    alignSelf: 'flex-end',
+    backgroundColor: '#007AFF',
+    borderBottomRightRadius: 6,
+  },
+  theirMessage: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#f0f0f0',
+    borderBottomLeftRadius: 6,
+  },
+  messageText: {
+    fontSize: 16,
+    lineHeight: 22,
+  },
+  myMessageText: {
+    color: 'white',
+  },
+  theirMessageText: {
+    color: '#000',
+  },
+  messageTimestamp: {
+    fontSize: 12,
+    marginTop: 4,
+  },
+  myTimestamp: {
+    color: 'rgba(255,255,255,0.7)',
+    textAlign: 'right',
+  },
+  theirTimestamp: {
+    color: '#666',
+  },
+  inputContainer: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#f0f0f0',
+    backgroundColor: '#fff',
+  },
+  messageInputRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    marginBottom: 8,
+  },
+  attachButton: {
+    padding: 8,
+    marginRight: 8,
+    alignSelf: 'flex-end',
+    marginBottom: 4,
+  },
+  messageInput: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    borderRadius: 20,
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    fontSize: 16,
+    minHeight: 40,
+    maxHeight: 100,
+    backgroundColor: '#fff',
+    textAlignVertical: 'top',
+    includeFontPadding: false,
+  },
+  sendButton: {
+    backgroundColor: '#007AFF',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 8,
+  },
+  sendButtonDisabled: {
+    backgroundColor: '#ccc',
+  },
+  inputHelper: {
+    fontSize: 12,
+    color: '#666',
+    textAlign: 'center',
   },
 });
 
-export default UnifiedInboxApp;
+export default App;

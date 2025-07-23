@@ -1,255 +1,496 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Dimensions,
+  Keyboard,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  SafeAreaView,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View
 } from 'react-native';
-import CustomDrawer from './component/CustomDrawer'; // Import your CustomDrawer component
+import CustomDrawer from './component/CustomDrawer';
 
-// Icon components (you can replace these with actual icon libraries like react-native-vector-icons)
-const MenuIcon = () => <Text style={styles.iconText}>☰</Text>;
-const UserIcon = () => <Text style={styles.iconText}>👤</Text>;
-const SearchIcon = () => <Text style={styles.iconText}>🔍</Text>;
-const PlusIcon = () => <Text style={styles.iconText}>+</Text>;
-const EditIcon = () => <Text style={styles.iconText}>✏️</Text>;
-const MoreIcon = () => <Text style={styles.iconText}>⋯</Text>;
+const { width, height } = Dimensions.get('window');
 
-const DiaryScreen = () => {
-  const [selectedCategory, setSelectedCategory] = useState('Personal');
-  const [searchText, setSearchText] = useState('');
-  const [drawerVisible, setDrawerVisible] = useState(false);
-
-  const categories = [
-    { name: 'Personal', icon: '👤' },
-    { name: 'Work', icon: '💼' },
-    { name: 'Gratitude', icon: '❤️' },
-    { name: 'Travel', icon: '✈️' }
-  ];
-  const gotoprofile=()=>{
-    const router =useRouter();
-    router.push('./profile')
-  }
-
-  const diaryEntries = [
+const DiaryApp = () => {
+  const router = useRouter();
+  const [isDrawerVisible, setIsDrawerVisible] = useState(false);
+  const [entries, setEntries] = useState([
     {
       id: 1,
-      title: 'Morning Reflections',
       date: 'June 30, 2024 • 9:45 PM',
-      content: 'Today I woke up feeling surprisingly energized despite only getting 6 hours of sleep. The morning meditation session helped center my thoughts and set a positive tone for the day. I need to remember to prioritize sleep more consistently.',
+      title: 'Morning Reflections',
+      content: 'Today I woke up feeling surprisingly energized despite only getting 5 hours of sleep. The morning meditation session really helped center my thoughts.',
       category: 'Personal',
       tags: ['Personal', 'Morning', 'Meditation']
     },
     {
       id: 2,
-      title: 'Afternoon Coffee Thoughts',
-      date: 'June 30, 2024 • 3:15 PM',
-      content: 'Sitting in my favorite cafe, watching people pass by. There\'s something magical about afternoon light streaming through windows. Made some progress on my reading list today.',
-      category: 'Personal',
-      tags: ['Personal', 'Coffee', 'Reading']
-    },
-    {
-      id: 8,
-      title: 'Weekend Planning Session',
-      date: 'June 30, 2024 • 5:30 PM',
-      content: 'Spent some time organizing my weekend plans. Looking forward to the hiking trip with friends and finally tackling that book I\'ve been meaning to read. Balance between adventure and relaxation feels just right.',
-      category: 'Personal',
-      tags: ['Personal', 'Planning', 'Weekend']
-    },
-    {
-      id: 9,
-      title: 'Learning Progress Update',
-      date: 'June 30, 2024 • 6:45 PM',
-      content: 'Made significant progress on my online course today. The concepts are finally clicking together and I can see how they apply to real-world scenarios. Consistency in learning really does pay off.',
-      category: 'Personal',
-      tags: ['Personal', 'Learning', 'Progress']
-    },
-    {
-      id: 3,
-      title: 'Workout Victory',
-      date: 'June 30, 2024 • 7:30 AM',
-      content: 'Finally completed that challenging workout routine I\'ve been avoiding. Feeling accomplished and energized. Small victories like this remind me why consistency matters.',
-      category: 'Health',
-      tags: ['Health', 'Exercise', 'Victory']
-    },
-    {
-      id: 4,
-      title: 'Creative Breakthrough',
-      date: 'June 29, 2024 • 10:20 PM',
-      content: 'Had an amazing creative session tonight. The ideas just kept flowing and I filled three pages with sketches and concepts. Sometimes inspiration strikes when you least expect it.',
-      category: 'Ideas',
-      tags: ['Ideas', 'Creative', 'Inspiration']
-    },
-    {
-      id: 5,
-      title: 'Work Project Breakthrough',
       date: 'June 30, 2024 • 11:20 AM',
-      content: 'Finally had that breakthrough on the mysterious project! After weeks of hitting roadblocks, the solution came to me while I was making coffee. Sometimes stepping away from the problem is exactly what we need.',
+      title: 'Work Project Breakthrough',
+      content: 'Finally cracked the code on that persistent project! After weeks of hitting roadblocks, the solution came to me while I was making coffee.',
       category: 'Work',
       tags: ['Work', 'Ideas']
-    },
-    {
-      id: 6,
-      title: 'Evening Gratitude',
-      date: 'June 29, 2024 • 8:45 PM',
-      content: 'Grateful for the simple joys today. The unexpected call from mom, dinner together as a family, and watching the sunset from our balcony. These small moments are what make life beautiful.',
-      category: 'Gratitude',
-      tags: ['Gratitude', 'Family', 'Evening']
-    },
-    {
-      id: 7,
-      title: 'New Business Idea',
-      date: 'June 29, 2024 • 2:30 PM',
-      content: 'Had a fascinating conversation with Sarah about sustainable business models. Her insights on circular economy principles sparked some ideas for a new venture. Need to research this further.',
-      category: 'Work',
-      tags: ['Business', 'Ideas', 'Sustainability']
     }
+  ]);
+  
+  const gotoprofile = () => {
+    router.push('./profile');
+  }
+
+  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showModal, setShowModal] = useState(false);
+  const [editingEntry, setEditingEntry] = useState(null);
+  const [newEntry, setNewEntry] = useState({
+    title: '',
+    content: '',
+    category: 'Personal'
+  });
+  const [selectedEntry, setSelectedEntry] = useState(null);
+  const [showViewModal, setShowViewModal] = useState(false);
+
+  const titleInputRef = useRef(null);
+  const contentInputRef = useRef(null);
+  const modalScrollRef = useRef(null);
+
+  const categories = [
+    { name: 'Personal', color: '#FEF3C7', icon: '🟡' },
+    { name: 'Work', color: '#E5E7EB', icon: '💼' },
+    { name: 'Gratitude', color: '#FECACA', icon: '❤️' },
+    { name: 'Ideas', color: '#BFDBFE', icon: '✈️' }
   ];
 
-  const filteredEntries = diaryEntries.filter(entry => 
-    (selectedCategory === 'All' || entry.category === selectedCategory) &&
-    (searchText === '' || entry.title.toLowerCase().includes(searchText.toLowerCase()) || 
-     entry.content.toLowerCase().includes(searchText.toLowerCase()))
-  );
+  useEffect(() => {
+    if (showModal && titleInputRef.current) {
+      setTimeout(() => {
+        titleInputRef.current.focus();
+      }, 100);
+    }
+  }, [showModal]);
 
-  // Handle drawer open
-  const openDrawer = () => {
-    setDrawerVisible(true);
+  const filteredEntries = entries.filter(entry => {
+    const matchesCategory = selectedCategory === 'All' || entry.category === selectedCategory;
+    const matchesSearch = entry.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         entry.content.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
+
+  const openDrawer = () => setIsDrawerVisible(true);
+  const closeDrawer = () => setIsDrawerVisible(false);
+
+  const handleAddEntry = () => {
+    if (newEntry.title.trim() && newEntry.content.trim()) {
+      const now = new Date();
+      const dateString = now.toLocaleDateString('en-US', { 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      }) + ' • ' + now.toLocaleTimeString('en-US', { 
+        hour: 'numeric', 
+        minute: '2-digit',
+        hour12: true 
+      });
+
+      const entry = {
+        id: Date.now(),
+        date: dateString,
+        title: newEntry.title,
+        content: newEntry.content,
+        category: newEntry.category,
+        tags: [newEntry.category]
+      };
+
+      setEntries([entry, ...entries]);
+      setNewEntry({ title: '', content: '', category: 'Personal' });
+      setShowModal(false);
+      Keyboard.dismiss();
+    }
   };
 
-  // Handle drawer close
-  const closeDrawer = () => {
-    setDrawerVisible(false);
+  const handleEditEntry = () => {
+    if (newEntry.title.trim() && newEntry.content.trim()) {
+      setEntries(entries.map(entry => 
+        entry.id === editingEntry.id 
+          ? { ...entry, title: newEntry.title, content: newEntry.content, category: newEntry.category }
+          : entry
+      ));
+      setEditingEntry(null);
+      setNewEntry({ title: '', content: '', category: 'Personal' });
+      setShowModal(false);
+      setShowViewModal(false);
+      Keyboard.dismiss();
+    }
+  };
+
+  const openEditModal = (entry) => {
+    setEditingEntry(entry);
+    setNewEntry({
+      title: entry.title,
+      content: entry.content,
+      category: entry.category
+    });
+    setShowViewModal(false);
+    setShowModal(true);
+  };
+
+  const openNewEntryModal = () => {
+    setEditingEntry(null);
+    setNewEntry({ title: '', content: '', category: 'Personal' });
+    setShowModal(true);
+  };
+
+  const getCategoryColor = (category) => {
+    const cat = categories.find(c => c.name === category);
+    return cat ? cat.color : '#E5E7EB';
+  };
+
+  const getCategoryIcon = (category) => {
+    const cat = categories.find(c => c.name === category);
+    return cat ? cat.icon : '📝';
+  };
+
+  const openEntry = (entry) => {
+    setSelectedEntry(entry);
+    setShowViewModal(true);
+  };
+
+  const dismissKeyboard = () => {
+    Keyboard.dismiss();
+  };
+
+  const handleInputFocus = (event, inputRef) => {
+    if (inputRef.current) {
+      inputRef.current.measure((x, y, width, height, pageX, pageY) => {
+        modalScrollRef.current?.scrollTo({
+          y: pageY - 100,
+          animated: true
+        });
+      });
+    }
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+    <TouchableWithoutFeedback onPress={dismissKeyboard}>
+      <SafeAreaView style={styles.container}>
+        <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+        
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity style={styles.headerIcon} onPress={openDrawer}>
-            <MenuIcon />
+          <TouchableOpacity onPress={openDrawer}>
+            <Ionicons name="menu-outline" size={24} color="#000" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Diary</Text>
-          <TouchableOpacity style={styles.headerIcon}>
-            <Ionicons name="person-outline" size={24} color="#000" onPress={gotoprofile}/>
+          <TouchableOpacity onPress={gotoprofile}>
+            <Ionicons name="person-outline" size={24} color="#000" />
           </TouchableOpacity>
         </View>
 
-        {/* Search Bar and New Entry Button */}
-        <View style={styles.searchContainer}>
-          <View style={styles.searchWrapper}>
-            <View style={styles.searchInputContainer}>
-              <View style={styles.searchIconContainer}>
-                <SearchIcon />
-              </View>
-              <TextInput
-                style={styles.searchInput}
-                placeholder="Search Entries..."
-                placeholderTextColor="#9CA3AF"
-                value={searchText}
-                onChangeText={setSearchText}
-              />
-            </View>
-            <TouchableOpacity style={styles.newEntryBtn}>
-              <PlusIcon />
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Categories Section */}
-        <View style={styles.categoriesContainer}>
-          <Text style={styles.categoriesTitle}>Categories</Text>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={{ flex: 1 }}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+        >
           <ScrollView 
-            horizontal 
-            style={styles.categoriesScroll}
-            showsHorizontalScrollIndicator={false}
+            style={styles.content} 
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ paddingBottom: 20 }}
           >
-            {categories.map((category) => (
-              <TouchableOpacity
-                key={category.name}
-                onPress={() => setSelectedCategory(category.name)}
-                style={[
-                  styles.categoryBtn,
-                  selectedCategory === category.name 
-                    ? styles.categoryBtnSelected 
-                    : styles.categoryBtnUnselected
-                ]}
-              >
-                <Text style={styles.categoryIcon}>{category.icon}</Text>
-                <Text style={[
-                  styles.categoryText,
-                  selectedCategory === category.name 
-                    ? styles.categoryTextSelected 
-                    : styles.categoryTextUnselected
-                ]}>
-                  {category.name}
-                </Text>
+            {/* Search and New Entry */}
+            <View style={styles.searchSection}>
+              <View style={styles.searchContainer}>
+                <Ionicons name="search-outline" size={18} color="#9CA3AF" style={styles.searchIcon} />
+                <TextInput
+                  style={styles.searchInput}
+                  placeholder="Search Entries..."
+                  value={searchQuery}
+                  onChangeText={setSearchQuery}
+                  placeholderTextColor="#9CA3AF"
+                  returnKeyType="search"
+                />
+              </View>
+              <TouchableOpacity style={styles.newEntryButton} onPress={openNewEntryModal}>
+                <Ionicons name="add" size={18} color="#000" />
+                <Text style={styles.newEntryText}>New</Text>
               </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
+            </View>
 
-        {/* Time Period */}
-        <View style={styles.timePeriodContainer}>
-          <View style={styles.timePeriodHeader}>
-            <Text style={styles.timePeriodTitle}>Time Period</Text>
-            <Text style={styles.timePeriodSubtitle}>This Week</Text>
-          </View>
-          <View style={styles.progressBar} />
-        </View>
-
-        {/* Diary Entries */}
-        <View style={styles.entriesContainer}>
-          {filteredEntries.slice(0, 9).map((entry) => (
-            <TouchableOpacity key={entry.id} style={styles.entryCard}>
-              <View style={styles.entryContentWrapper}>
-                <View style={styles.entryMainContent}>
-                  <View style={styles.entryDateWrapper}>
-                    <View style={styles.entryDateDot} />
-                    <Text style={styles.entryDateText}>{entry.date}</Text>
-                  </View>
-                  <Text style={styles.entryTitle}>{entry.title}</Text>
-                  <Text style={styles.entryContent} numberOfLines={3}>
-                    {entry.content.length > 80 ? entry.content.substring(0, 80) + '...' : entry.content}
+            {/* Categories */}
+            <View style={styles.categoriesSection}>
+              <Text style={styles.sectionTitle}>Categories</Text>
+              <ScrollView 
+                horizontal 
+                showsHorizontalScrollIndicator={false} 
+                style={styles.categoriesScroll}
+                contentContainerStyle={{ paddingRight: 16 }}
+              >
+                <TouchableOpacity
+                  style={[
+                    styles.categoryButton,
+                    selectedCategory === 'All' ? styles.selectedCategory : styles.unselectedCategory
+                  ]}
+                  onPress={() => setSelectedCategory('All')}
+                >
+                  <Text style={[
+                    styles.categoryText,
+                    selectedCategory === 'All' ? styles.selectedCategoryText : styles.unselectedCategoryText
+                  ]}>
+                    All
                   </Text>
-                  <View style={styles.entryTagsWrapper}>
-                    {entry.tags.slice(0, 2).map((tag, index) => (
-                      <View key={index} style={styles.entryTag}>
-                        <Text style={styles.entryTagText}>{tag}</Text>
+                </TouchableOpacity>
+                {categories.map((category) => (
+                  <TouchableOpacity
+                    key={category.name}
+                    style={[
+                      styles.categoryButton,
+                      selectedCategory === category.name ? styles.selectedCategory : 
+                      { backgroundColor: category.color }
+                    ]}
+                    onPress={() => setSelectedCategory(category.name)}
+                  >
+                    <Text style={styles.categoryIcon}>{category.icon}</Text>
+                    <Text style={[
+                      styles.categoryText,
+                      selectedCategory === category.name ? styles.selectedCategoryText : styles.unselectedCategoryText
+                    ]}>
+                      {category.name}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+
+            {/* Entries List */}
+            <View style={styles.entriesSection}>
+              {filteredEntries.map((entry) => (
+                <TouchableOpacity
+                  key={entry.id}
+                  style={styles.entryCard}
+                  onPress={() => openEntry(entry)}
+                >
+                  <View style={styles.entryHeader}>
+                    <View style={[styles.categoryDot, { backgroundColor: getCategoryColor(entry.category) }]} />
+                    <View style={styles.entryActions}>
+                      <TouchableOpacity onPress={() => openEditModal(entry)}>
+                        <Ionicons name="create-outline" size={18} color="#6B7280" />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                  <Text style={styles.entryDate}>{entry.date}</Text>
+                  <Text style={styles.entryTitle}>{entry.title}</Text>
+                  <Text style={styles.entryContent} numberOfLines={2}>
+                    {entry.content}
+                  </Text>
+                  <View style={styles.tagsContainer}>
+                    {entry.tags.map((tag, index) => (
+                      <View key={index} style={styles.tag}>
+                        <Text style={styles.tagText}>{tag}</Text>
                       </View>
                     ))}
                   </View>
-                </View>
-                <View style={styles.entryActions}>
-                  <TouchableOpacity style={styles.entryActionBtn}>
-                    <EditIcon />
-                  </TouchableOpacity>
-                  <TouchableOpacity style={styles.entryActionBtn}>
-                    <MoreIcon />
-                  </TouchableOpacity>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
+
+        {/* Custom Drawer */}
+        <CustomDrawer
+          isVisible={isDrawerVisible}
+          onClose={closeDrawer}
+          activeScreen="diary"
+        />
+
+        {/* Modal for New/Edit Entry */}
+        <Modal
+          visible={showModal}
+          animationType="slide"
+          transparent={true}
+          onRequestClose={() => {
+            setShowModal(false);
+            Keyboard.dismiss();
+          }}
+        >
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : null}
+            style={styles.modalOverlay}
+            keyboardVerticalOffset={Platform.select({
+              ios: 60,
+              android: 20
+            })}
+          >
+            <TouchableWithoutFeedback onPress={dismissKeyboard}>
+              <View style={styles.modalOverlayContent}>
+                <View style={styles.modalContent}>
+                  <View style={styles.modalHeader}>
+                    <Text style={styles.modalTitle}>
+                      {editingEntry ? 'Edit Entry' : 'New Entry'}
+                    </Text>
+                    <TouchableOpacity 
+                      onPress={() => {
+                        setShowModal(false);
+                        Keyboard.dismiss();
+                      }}
+                      style={styles.closeModalButton}
+                    >
+                      <Ionicons name="close" size={24} color="#6B7280" />
+                    </TouchableOpacity>
+                  </View>
+                  
+                  <ScrollView 
+                    ref={modalScrollRef}
+                    style={styles.modalScrollContent}
+                    contentContainerStyle={styles.modalForm}
+                    keyboardShouldPersistTaps="handled"
+                    showsVerticalScrollIndicator={false}
+                  >
+                    <View style={styles.inputGroup}>
+                      <Text style={styles.inputLabel}>Title</Text>
+                      <TextInput
+                        ref={titleInputRef}
+                        style={styles.textInput}
+                        value={newEntry.title}
+                        onChangeText={(text) => setNewEntry({...newEntry, title: text})}
+                        placeholder="Enter title..."
+                        placeholderTextColor="#9CA3AF"
+                        returnKeyType="next"
+                        onSubmitEditing={() => contentInputRef.current.focus()}
+                        blurOnSubmit={false}
+                        onFocus={(e) => handleInputFocus(e, titleInputRef)}
+                      />
+                    </View>
+
+                    <View style={styles.inputGroup}>
+                      <Text style={styles.inputLabel}>Category</Text>
+                      <ScrollView 
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        contentContainerStyle={styles.categorySelectorContainer}
+                      >
+                        {categories.map((category) => (
+                          <TouchableOpacity
+                            key={category.name}
+                            style={[
+                              styles.categorySelectorItem,
+                              newEntry.category === category.name ? styles.selectedCategorySelectorItem : null,
+                              { backgroundColor: category.color }
+                            ]}
+                            onPress={() => setNewEntry({...newEntry, category: category.name})}
+                          >
+                            <Text style={styles.categoryIcon}>{category.icon}</Text>
+                            <Text style={styles.categorySelectorText}>{category.name}</Text>
+                          </TouchableOpacity>
+                        ))}
+                      </ScrollView>
+                    </View>
+
+                    <View style={styles.inputGroup}>
+                      <Text style={styles.inputLabel}>Content</Text>
+                      <TextInput
+                        ref={contentInputRef}
+                        style={styles.textArea}
+                        value={newEntry.content}
+                        onChangeText={(text) => setNewEntry({...newEntry, content: text})}
+                        placeholder="Write your thoughts..."
+                        placeholderTextColor="#9CA3AF"
+                        multiline
+                        textAlignVertical="top"
+                        onFocus={(e) => handleInputFocus(e, contentInputRef)}
+                      />
+                    </View>
+                  </ScrollView>
+
+                  <View style={styles.modalFooter}>
+                    <TouchableOpacity
+                      style={styles.cancelButton}
+                      onPress={() => {
+                        setShowModal(false);
+                        setEditingEntry(null);
+                        setNewEntry({ title: '', content: '', category: 'Personal' });
+                        Keyboard.dismiss();
+                      }}
+                    >
+                      <Text style={styles.cancelButtonText}>Cancel</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.saveButton}
+                      onPress={editingEntry ? handleEditEntry : handleAddEntry}
+                    >
+                      <Text style={styles.saveButtonText}>
+                        {editingEntry ? 'Update' : 'Save'}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
                 </View>
               </View>
-            </TouchableOpacity>
-          ))}
-        </View>
+            </TouchableWithoutFeedback>
+          </KeyboardAvoidingView>
+        </Modal>
 
-        {/* Bottom Spacing */}
-        <View style={styles.bottomSpacing} />
-      </ScrollView>
+        {/* Modal for Viewing Entry */}
+        <Modal
+          visible={showViewModal}
+          animationType="slide"
+          transparent={false}
+          onRequestClose={() => setShowViewModal(false)}
+        >
+          <SafeAreaView style={styles.viewModalContainer}>
+            <View style={styles.viewModalHeader}>
+              <TouchableOpacity 
+                onPress={() => setShowViewModal(false)}
+                style={styles.backButton}
+              >
+                <Ionicons name="arrow-back" size={24} color="#000" />
+              </TouchableOpacity>
+              <Text style={styles.viewModalTitle}>{selectedEntry?.title || 'Diary Entry'}</Text>
+              <TouchableOpacity
+                onPress={() => openEditModal(selectedEntry)}
+                style={styles.editButton}
+              >
+                <Ionicons name="create-outline" size={24} color="#000" />
+              </TouchableOpacity>
+            </View>
 
-      {/* Custom Drawer */}
-      <CustomDrawer
-        isVisible={drawerVisible}
-        onClose={closeDrawer}
-        activeScreen="diary" // You can make this dynamic based on current screen
-      />
-    </SafeAreaView>
+            <ScrollView 
+              style={styles.viewModalScrollContent}
+              contentContainerStyle={styles.viewModalInnerContent}
+              showsVerticalScrollIndicator={false}
+            >
+              {selectedEntry && (
+                <>
+                  <View style={styles.viewMetaData}>
+                    <View style={styles.viewCategory}>
+                      <View style={[styles.categoryDot, { backgroundColor: getCategoryColor(selectedEntry.category) }]} />
+                      <Text style={styles.viewCategoryText}>{selectedEntry.category}</Text>
+                    </View>
+                    <Text style={styles.viewDate}>{selectedEntry.date}</Text>
+                  </View>
+                  
+                  <Text style={styles.viewContent}>{selectedEntry.content}</Text>
+                  
+                  <View style={styles.viewTags}>
+                    {selectedEntry.tags.map((tag, index) => (
+                      <View key={index} style={styles.tag}>
+                        <Text style={styles.tagText}>{tag}</Text>
+                      </View>
+                    ))}
+                  </View>
+                </>
+              )}
+            </ScrollView>
+          </SafeAreaView>
+        </Modal>
+      </SafeAreaView>
+    </TouchableWithoutFeedback>
   );
 };
 
@@ -258,255 +499,346 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFFFFF',
   },
-  scrollView: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-  },
-  iconText: {
-    fontSize: 16,
-    color: '#374151',
-  },
-  
-  // Header Section
   header: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
+    alignItems: 'center',
     paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 16,
-    backgroundColor: '#FFFFFF',
+    paddingVertical: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#F3F4F6',
-  },
-  headerIcon: {
-    width: 24,
-    height: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   headerTitle: {
     fontSize: 20,
     fontWeight: '600',
     color: '#111827',
-    letterSpacing: -0.5,
   },
-
-  // Search Section
-  searchContainer: {
+  content: {
+    flex: 1,
+    paddingTop: 8,
+  },
+  searchSection: {
+    flexDirection: 'row',
     paddingHorizontal: 16,
-    marginBottom: 24,
-    backgroundColor: '#FFFFFF',
+    paddingTop: 8,
+    gap: 12,
+    marginBottom: 16,
   },
-  searchWrapper: {
+  searchContainer: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-  },
-  searchInputContainer: {
-    flex: 1,
-    position: 'relative',
-  },
-  searchInput: {
-    paddingVertical: 12,
-    paddingLeft: 40,
-    paddingRight: 16,
     backgroundColor: '#F3F4F6',
     borderRadius: 8,
+    paddingHorizontal: 12,
+  },
+  searchInput: {
+    flex: 1,
+    paddingVertical: 12,
     fontSize: 14,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
     color: '#111827',
+    paddingLeft: 8,
   },
-  searchIconContainer: {
-    position: 'absolute',
-    left: 12,
-    top: '50%',
-    marginTop: -8,
-    zIndex: 1,
+  searchIcon: {
+    marginRight: 4,
   },
-  newEntryBtn: {
-    backgroundColor: '#FBBF24',
-    padding: 12,
-    borderRadius: 8,
+  newEntryButton: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#FBBF24',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-
-  // Categories Section
-  categoriesContainer: {
+    backgroundColor: '#FCD34D',
     paddingHorizontal: 16,
-    marginBottom: 24,
-    backgroundColor: '#FFFFFF',
+    paddingVertical: 12,
+    borderRadius: 8,
+    gap: 6,
   },
-  categoriesTitle: {
-    fontSize: 18,
+  newEntryText: {
+    fontSize: 14,
     fontWeight: '500',
-    color: '#111827',
+    color: '#000000',
+  },
+  categoriesSection: {
+    paddingHorizontal: 16,
+    marginBottom: 16,
+  },
+  sectionTitle: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#6B7280',
     marginBottom: 12,
-    letterSpacing: -0.5,
+    textTransform: 'uppercase',
   },
   categoriesScroll: {
-    flexDirection: 'row',
+    flexGrow: 0,
   },
-  categoryBtn: {
+  categoryButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 8,
     paddingHorizontal: 12,
-    borderRadius: 20,
-    marginRight: 12,
+    paddingVertical: 8,
+    borderRadius: 16,
+    marginRight: 8,
   },
-  categoryBtnSelected: {
-    backgroundColor: '#1F2937',
+  selectedCategory: {
+    backgroundColor: '#FCD34D',
   },
-  categoryBtnUnselected: {
+  unselectedCategory: {
     backgroundColor: '#F3F4F6',
   },
   categoryIcon: {
-    fontSize: 12,
-    marginRight: 8,
+    fontSize: 14,
+    marginRight: 4,
   },
   categoryText: {
     fontSize: 14,
     fontWeight: '500',
   },
-  categoryTextSelected: {
-    color: '#FFFFFF',
+  selectedCategoryText: {
+    color: '#000000',
   },
-  categoryTextUnselected: {
+  unselectedCategoryText: {
     color: '#374151',
   },
-
-  // Time Period Section
-  timePeriodContainer: {
+  entriesSection: {
     paddingHorizontal: 16,
-    marginBottom: 16,
-    backgroundColor: '#FFFFFF',
-  },
-  timePeriodHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
-  timePeriodTitle: {
-    fontSize: 18,
-    fontWeight: '500',
-    color: '#111827',
-    letterSpacing: -0.5,
-  },
-  timePeriodSubtitle: {
-    fontSize: 14,
-    color: '#6B7280',
-    fontWeight: '400',
-  },
-  progressBar: {
-    height: 4,
-    backgroundColor: '#FBBF24',
-    borderRadius: 20,
-    shadowColor: '#FBBF24',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-
-  // Diary Entries Section
-  entriesContainer: {
-    paddingHorizontal: 16,
-    backgroundColor: '#FFFFFF',
   },
   entryCard: {
-    backgroundColor: '#F3F4F6',
-    borderRadius: 12,
-    padding: 12,
+    backgroundColor: '#F9FAFB',
+    borderRadius: 8,
+    padding: 16,
     marginBottom: 12,
-    borderWidth: 1,
-    borderColor: 'transparent',
   },
-  entryContentWrapper: {
+  entryHeader: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
     justifyContent: 'space-between',
-  },
-  entryMainContent: {
-    flex: 1,
-    paddingRight: 12,
-  },
-  entryDateWrapper: {
-    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 4,
-  },
-  entryDateDot: {
-    width: 8,
-    height: 8,
-    backgroundColor: '#FBBF24',
-    borderRadius: 4,
-    marginRight: 8,
-  },
-  entryDateText: {
-    fontSize: 12,
-    color: '#6B7280',
-    fontWeight: '400',
-  },
-  entryTitle: {
-    fontWeight: '500',
-    color: '#111827',
-    marginBottom: 4,
-    fontSize: 14,
-    lineHeight: 18,
-    letterSpacing: -0.2,
-  },
-  entryContent: {
-    fontSize: 12,
-    color: '#4B5563',
-    lineHeight: 16,
     marginBottom: 8,
   },
-  entryTagsWrapper: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-  },
-  entryTag: {
-    paddingVertical: 2,
-    paddingHorizontal: 8,
-    backgroundColor: '#E5E7EB',
-    borderRadius: 4,
-    marginRight: 4,
-    marginBottom: 4,
-    borderWidth: 1,
-    borderColor: '#D1D5DB',
-  },
-  entryTagText: {
-    fontSize: 12,
-    color: '#4B5563',
-    fontWeight: '400',
+  categoryDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
   },
   entryActions: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    paddingTop: 2,
+    gap: 12,
   },
-  entryActionBtn: {
-    width: 12,
-    height: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: 6,
+  entryDate: {
+    fontSize: 12,
+    color: '#6B7280',
+    marginBottom: 4,
   },
-
-  // Bottom Spacing
-  bottomSpacing: {
-    height: 80,
+  entryTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#111827',
+    marginBottom: 8,
+  },
+  entryContent: {
+    fontSize: 14,
+    color: '#6B7280',
+    lineHeight: 20,
+    marginBottom: 12,
+  },
+  tagsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  tag: {
+    backgroundColor: '#E5E7EB',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+  },
+  tagText: {
+    fontSize: 12,
+    color: '#6B7280',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalOverlayContent: {
+    width: '100%',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
     backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    width: '100%',
+    maxHeight: height * 0.85,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 24,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#111827',
+  },
+  closeModalButton: {
+    padding: 4,
+  },
+  modalScrollContent: {
+    flexGrow: 1,
+    paddingBottom: 20,
+  },
+  modalForm: {
+    paddingHorizontal: 24,
+  },
+  inputGroup: {
+    marginBottom: 24,
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#374151',
+    marginBottom: 8,
+  },
+  textInput: {
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 16,
+    color: '#111827',
+    marginBottom: 16,
+  },
+  categorySelectorContainer: {
+    flexDirection: 'row',
+    gap: 8,
+    paddingVertical: 4,
+  },
+  categorySelectorItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+  },
+  selectedCategorySelectorItem: {
+    borderColor: '#F59E0B',
+  },
+  categorySelectorText: {
+    fontSize: 14,
+    color: '#374151',
+    marginLeft: 4,
+  },
+  textArea: {
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 16,
+    color: '#111827',
+    height: 180,
+    textAlignVertical: 'top',
+  },
+  modalFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#F3F4F6',
+    backgroundColor: '#FFFFFF',
+  },
+  cancelButton: {
+    flex: 1,
+    marginRight: 8,
+    paddingVertical: 14,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+    alignItems: 'center',
+  },
+  saveButton: {
+    flex: 1,
+    marginLeft: 8,
+    paddingVertical: 14,
+    borderRadius: 8,
+    backgroundColor: '#FCD34D',
+    alignItems: 'center',
+  },
+  cancelButtonText: {
+    fontSize: 16,
+    color: '#374151',
+    fontWeight: '500',
+  },
+  saveButtonText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#000000',
+  },
+  viewModalContainer: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+  viewModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  backButton: {
+    padding: 4,
+  },
+  viewModalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#111827',
+    flex: 1,
+    textAlign: 'center',
+    marginHorizontal: 16,
+  },
+  viewModalScrollContent: {
+    flex: 1,
+  },
+  viewModalInnerContent: {
+    padding: 24,
+    paddingBottom: 40,
+  },
+  viewMetaData: {
+    marginBottom: 24,
+  },
+  viewCategory: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  viewCategoryText: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginLeft: 8,
+  },
+  viewDate: {
+    fontSize: 12,
+    color: '#9CA3AF',
+  },
+  viewContent: {
+    fontSize: 16,
+    lineHeight: 24,
+    color: '#374151',
+    marginBottom: 24,
+  },
+  viewTags: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
   },
 });
 
-export default DiaryScreen;
+export default DiaryApp;
